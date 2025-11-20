@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package flight;
+
+option go_package = "./proto";
+
+service DataNodeService {
+  rpc Gossip(GossipRequest) returns (GossipResponse);
+}
+
+message VectorClock {
+  map<string, int32> versions = 1;
+}
+
+message FlightState {
+  string status = 1;
+  VectorClock clock = 2;
+}
+
+message GossipRequest {
+  string flight_id = 1;
+  FlightState state = 2;
+  string sender_id = 3;
+}
+
+message GossipResponse {
+  bool success = 1;
+}

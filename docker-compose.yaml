@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  node-a:
+    build: .
+    environment:
+      - NODE_ID=A
+      - PORT=50051
+      - PEERS=node-b:50051,node-c:50051
+    ports:
+      - "50051:50051"
+
+  node-b:
+    build: .
+    environment:
+      - NODE_ID=B
+      - PORT=50051
+      - PEERS=node-a:50051,node-c:50051
+    ports:
+      - "50052:50051"
+
+  node-c:
+    build: .
+    environment:
+      - NODE_ID=C
+      - PORT=50051
+      - PEERS=node-a:50051,node-b:50051
+    ports:
+      - "50053:50051"
