@@ -6,6 +6,27 @@ option go_package = "./proto";
 
 service DataNodeService {
   rpc Gossip(GossipRequest) returns (GossipResponse);
+  rpc Write(WriteRequest) returns (WriteResponse);
+  rpc Read(ReadRequest) returns (ReadResponse);
+}
+
+message WriteRequest {
+  string flight_id = 1;
+  string status = 2;
+}
+
+message WriteResponse {
+  bool success = 1;
+  string node_id = 2;
+  VectorClock clock = 3;
+}
+
+message ReadRequest {
+  string flight_id = 1;
+}
+
+message ReadResponse {
+  FlightState state = 1;
 }
 
 message VectorClock {

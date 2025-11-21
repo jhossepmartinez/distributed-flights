@@ -1,4 +1,9 @@
+.PHONY: proto
+
 image_name = datanode
+
+proto:
+	protoc --go_out=. --go-grpc_out=. ./proto/flight.proto
 
 build:
 	docker build -t $(image_name) .

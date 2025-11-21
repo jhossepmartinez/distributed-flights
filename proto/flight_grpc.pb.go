@@ -20,6 +20,8 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	DataNodeService_Gossip_FullMethodName = "/flight.DataNodeService/Gossip"
+	DataNodeService_Write_FullMethodName  = "/flight.DataNodeService/Write"
+	DataNodeService_Read_FullMethodName   = "/flight.DataNodeService/Read"
 )
 
 // DataNodeServiceClient is the client API for DataNodeService service.
@@ -27,6 +29,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DataNodeServiceClient interface {
 	Gossip(ctx context.Context, in *GossipRequest, opts ...grpc.CallOption) (*GossipResponse, error)
+	Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error)
+	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
 }
 
 type dataNodeServiceClient struct {
@@ -47,11 +51,33 @@ func (c *dataNodeServiceClient) Gossip(ctx context.Context, in *GossipRequest, o
 	return out, nil
 }
 
+func (c *dataNodeServiceClient) Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(WriteResponse)
+	err := c.cc.Invoke(ctx, DataNodeService_Write_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataNodeServiceClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReadResponse)
+	err := c.cc.Invoke(ctx, DataNodeService_Read_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DataNodeServiceServer is the server API for DataNodeService service.
 // All implementations must embed UnimplementedDataNodeServiceServer
 // for forward compatibility.
 type DataNodeServiceServer interface {
 	Gossip(context.Context, *GossipRequest) (*GossipResponse, error)
+	Write(context.Context, *WriteRequest) (*WriteResponse, error)
+	Read(context.Context, *ReadRequest) (*ReadResponse, error)
 	mustEmbedUnimplementedDataNodeServiceServer()
 }
 
@@ -64,6 +90,12 @@ type UnimplementedDataNodeServiceServer struct{}
 
 func (UnimplementedDataNodeServiceServer) Gossip(context.Context, *GossipRequest) (*GossipResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Gossip not implemented")
+}
+func (UnimplementedDataNodeServiceServer) Write(context.Context, *WriteRequest) (*WriteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Write not implemented")
+}
+func (UnimplementedDataNodeServiceServer) Read(context.Context, *ReadRequest) (*ReadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
 }
 func (UnimplementedDataNodeServiceServer) mustEmbedUnimplementedDataNodeServiceServer() {}
 func (UnimplementedDataNodeServiceServer) testEmbeddedByValue()                         {}
@@ -104,6 +136,42 @@ func _DataNodeService_Gossip_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DataNodeService_Write_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataNodeServiceServer).Write(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DataNodeService_Write_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataNodeServiceServer).Write(ctx, req.(*WriteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DataNodeService_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataNodeServiceServer).Read(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DataNodeService_Read_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataNodeServiceServer).Read(ctx, req.(*ReadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DataNodeService_ServiceDesc is the grpc.ServiceDesc for DataNodeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +182,14 @@ var DataNodeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Gossip",
 			Handler:    _DataNodeService_Gossip_Handler,
+		},
+		{
+			MethodName: "Write",
+			Handler:    _DataNodeService_Write_Handler,
+		},
+		{
+			MethodName: "Read",
+			Handler:    _DataNodeService_Read_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

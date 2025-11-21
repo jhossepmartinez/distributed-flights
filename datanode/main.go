@@ -258,6 +258,9 @@ func main() {
 				flightID := record[1]
 				updateType := record[2]
 				updateValue := record[3]
+				if updateType == "puerta" {
+					continue
+				}
 
 				// Calcular cuánto esperar desde el último evento
 				delay := simTime - lastSimTime
