@@ -19,6 +19,146 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	Coordinator_ClientWrite_FullMethodName = "/flight.Coordinator/ClientWrite"
+	Coordinator_ClientRead_FullMethodName  = "/flight.Coordinator/ClientRead"
+)
+
+// CoordinatorClient is the client API for Coordinator service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type CoordinatorClient interface {
+	ClientWrite(ctx context.Context, in *ClientWriteRequest, opts ...grpc.CallOption) (*WriteResponse, error)
+	ClientRead(ctx context.Context, in *ClientReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
+}
+
+type coordinatorClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewCoordinatorClient(cc grpc.ClientConnInterface) CoordinatorClient {
+	return &coordinatorClient{cc}
+}
+
+func (c *coordinatorClient) ClientWrite(ctx context.Context, in *ClientWriteRequest, opts ...grpc.CallOption) (*WriteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(WriteResponse)
+	err := c.cc.Invoke(ctx, Coordinator_ClientWrite_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coordinatorClient) ClientRead(ctx context.Context, in *ClientReadRequest, opts ...grpc.CallOption) (*ReadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReadResponse)
+	err := c.cc.Invoke(ctx, Coordinator_ClientRead_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// CoordinatorServer is the server API for Coordinator service.
+// All implementations must embed UnimplementedCoordinatorServer
+// for forward compatibility.
+type CoordinatorServer interface {
+	ClientWrite(context.Context, *ClientWriteRequest) (*WriteResponse, error)
+	ClientRead(context.Context, *ClientReadRequest) (*ReadResponse, error)
+	mustEmbedUnimplementedCoordinatorServer()
+}
+
+// UnimplementedCoordinatorServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedCoordinatorServer struct{}
+
+func (UnimplementedCoordinatorServer) ClientWrite(context.Context, *ClientWriteRequest) (*WriteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClientWrite not implemented")
+}
+func (UnimplementedCoordinatorServer) ClientRead(context.Context, *ClientReadRequest) (*ReadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClientRead not implemented")
+}
+func (UnimplementedCoordinatorServer) mustEmbedUnimplementedCoordinatorServer() {}
+func (UnimplementedCoordinatorServer) testEmbeddedByValue()                     {}
+
+// UnsafeCoordinatorServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to CoordinatorServer will
+// result in compilation errors.
+type UnsafeCoordinatorServer interface {
+	mustEmbedUnimplementedCoordinatorServer()
+}
+
+func RegisterCoordinatorServer(s grpc.ServiceRegistrar, srv CoordinatorServer) {
+	// If the following call pancis, it indicates UnimplementedCoordinatorServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&Coordinator_ServiceDesc, srv)
+}
+
+func _Coordinator_ClientWrite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientWriteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoordinatorServer).ClientWrite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Coordinator_ClientWrite_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoordinatorServer).ClientWrite(ctx, req.(*ClientWriteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Coordinator_ClientRead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientReadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoordinatorServer).ClientRead(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Coordinator_ClientRead_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoordinatorServer).ClientRead(ctx, req.(*ClientReadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Coordinator_ServiceDesc is the grpc.ServiceDesc for Coordinator service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Coordinator_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "flight.Coordinator",
+	HandlerType: (*CoordinatorServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ClientWrite",
+			Handler:    _Coordinator_ClientWrite_Handler,
+		},
+		{
+			MethodName: "ClientRead",
+			Handler:    _Coordinator_ClientRead_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "proto/flight.proto",
+}
+
+const (
 	DataNodeService_Gossip_FullMethodName = "/flight.DataNodeService/Gossip"
 	DataNodeService_Write_FullMethodName  = "/flight.DataNodeService/Write"
 	DataNodeService_Read_FullMethodName   = "/flight.DataNodeService/Read"

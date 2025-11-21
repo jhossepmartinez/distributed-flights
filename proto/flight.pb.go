@@ -21,17 +21,138 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ClientWriteRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	FlightId      string                 `protobuf:"bytes,2,opt,name=flight_id,json=flightId,proto3" json:"flight_id,omitempty"`
+	UpdateType    string                 `protobuf:"bytes,3,opt,name=update_type,json=updateType,proto3" json:"update_type,omitempty"`
+	Value         string                 `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClientWriteRequest) Reset() {
+	*x = ClientWriteRequest{}
+	mi := &file_proto_flight_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClientWriteRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClientWriteRequest) ProtoMessage() {}
+
+func (x *ClientWriteRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_flight_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClientWriteRequest.ProtoReflect.Descriptor instead.
+func (*ClientWriteRequest) Descriptor() ([]byte, []int) {
+	return file_proto_flight_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ClientWriteRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *ClientWriteRequest) GetFlightId() string {
+	if x != nil {
+		return x.FlightId
+	}
+	return ""
+}
+
+func (x *ClientWriteRequest) GetUpdateType() string {
+	if x != nil {
+		return x.UpdateType
+	}
+	return ""
+}
+
+func (x *ClientWriteRequest) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type ClientReadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	FlightId      string                 `protobuf:"bytes,2,opt,name=flight_id,json=flightId,proto3" json:"flight_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClientReadRequest) Reset() {
+	*x = ClientReadRequest{}
+	mi := &file_proto_flight_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClientReadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClientReadRequest) ProtoMessage() {}
+
+func (x *ClientReadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_flight_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClientReadRequest.ProtoReflect.Descriptor instead.
+func (*ClientReadRequest) Descriptor() ([]byte, []int) {
+	return file_proto_flight_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ClientReadRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *ClientReadRequest) GetFlightId() string {
+	if x != nil {
+		return x.FlightId
+	}
+	return ""
+}
+
 type WriteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FlightId      string                 `protobuf:"bytes,1,opt,name=flight_id,json=flightId,proto3" json:"flight_id,omitempty"`
-	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	UpdateType    string                 `protobuf:"bytes,2,opt,name=update_type,json=updateType,proto3" json:"update_type,omitempty"`
+	Value         string                 `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *WriteRequest) Reset() {
 	*x = WriteRequest{}
-	mi := &file_proto_flight_proto_msgTypes[0]
+	mi := &file_proto_flight_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +164,7 @@ func (x *WriteRequest) String() string {
 func (*WriteRequest) ProtoMessage() {}
 
 func (x *WriteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_flight_proto_msgTypes[0]
+	mi := &file_proto_flight_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +177,7 @@ func (x *WriteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteRequest.ProtoReflect.Descriptor instead.
 func (*WriteRequest) Descriptor() ([]byte, []int) {
-	return file_proto_flight_proto_rawDescGZIP(), []int{0}
+	return file_proto_flight_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *WriteRequest) GetFlightId() string {
@@ -66,9 +187,16 @@ func (x *WriteRequest) GetFlightId() string {
 	return ""
 }
 
-func (x *WriteRequest) GetStatus() string {
+func (x *WriteRequest) GetUpdateType() string {
 	if x != nil {
-		return x.Status
+		return x.UpdateType
+	}
+	return ""
+}
+
+func (x *WriteRequest) GetValue() string {
+	if x != nil {
+		return x.Value
 	}
 	return ""
 }
@@ -84,7 +212,7 @@ type WriteResponse struct {
 
 func (x *WriteResponse) Reset() {
 	*x = WriteResponse{}
-	mi := &file_proto_flight_proto_msgTypes[1]
+	mi := &file_proto_flight_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -96,7 +224,7 @@ func (x *WriteResponse) String() string {
 func (*WriteResponse) ProtoMessage() {}
 
 func (x *WriteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_flight_proto_msgTypes[1]
+	mi := &file_proto_flight_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -109,7 +237,7 @@ func (x *WriteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteResponse.ProtoReflect.Descriptor instead.
 func (*WriteResponse) Descriptor() ([]byte, []int) {
-	return file_proto_flight_proto_rawDescGZIP(), []int{1}
+	return file_proto_flight_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *WriteResponse) GetSuccess() bool {
@@ -142,7 +270,7 @@ type ReadRequest struct {
 
 func (x *ReadRequest) Reset() {
 	*x = ReadRequest{}
-	mi := &file_proto_flight_proto_msgTypes[2]
+	mi := &file_proto_flight_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -154,7 +282,7 @@ func (x *ReadRequest) String() string {
 func (*ReadRequest) ProtoMessage() {}
 
 func (x *ReadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_flight_proto_msgTypes[2]
+	mi := &file_proto_flight_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -167,7 +295,7 @@ func (x *ReadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadRequest.ProtoReflect.Descriptor instead.
 func (*ReadRequest) Descriptor() ([]byte, []int) {
-	return file_proto_flight_proto_rawDescGZIP(), []int{2}
+	return file_proto_flight_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ReadRequest) GetFlightId() string {
@@ -186,7 +314,7 @@ type ReadResponse struct {
 
 func (x *ReadResponse) Reset() {
 	*x = ReadResponse{}
-	mi := &file_proto_flight_proto_msgTypes[3]
+	mi := &file_proto_flight_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -198,7 +326,7 @@ func (x *ReadResponse) String() string {
 func (*ReadResponse) ProtoMessage() {}
 
 func (x *ReadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_flight_proto_msgTypes[3]
+	mi := &file_proto_flight_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -211,7 +339,7 @@ func (x *ReadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadResponse.ProtoReflect.Descriptor instead.
 func (*ReadResponse) Descriptor() ([]byte, []int) {
-	return file_proto_flight_proto_rawDescGZIP(), []int{3}
+	return file_proto_flight_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ReadResponse) GetState() *FlightState {
@@ -230,7 +358,7 @@ type VectorClock struct {
 
 func (x *VectorClock) Reset() {
 	*x = VectorClock{}
-	mi := &file_proto_flight_proto_msgTypes[4]
+	mi := &file_proto_flight_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -242,7 +370,7 @@ func (x *VectorClock) String() string {
 func (*VectorClock) ProtoMessage() {}
 
 func (x *VectorClock) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_flight_proto_msgTypes[4]
+	mi := &file_proto_flight_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -255,7 +383,7 @@ func (x *VectorClock) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VectorClock.ProtoReflect.Descriptor instead.
 func (*VectorClock) Descriptor() ([]byte, []int) {
-	return file_proto_flight_proto_rawDescGZIP(), []int{4}
+	return file_proto_flight_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *VectorClock) GetVersions() map[string]int32 {
@@ -268,14 +396,15 @@ func (x *VectorClock) GetVersions() map[string]int32 {
 type FlightState struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
-	Clock         *VectorClock           `protobuf:"bytes,2,opt,name=clock,proto3" json:"clock,omitempty"`
+	Gate          string                 `protobuf:"bytes,2,opt,name=gate,proto3" json:"gate,omitempty"`
+	Clock         *VectorClock           `protobuf:"bytes,3,opt,name=clock,proto3" json:"clock,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *FlightState) Reset() {
 	*x = FlightState{}
-	mi := &file_proto_flight_proto_msgTypes[5]
+	mi := &file_proto_flight_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -287,7 +416,7 @@ func (x *FlightState) String() string {
 func (*FlightState) ProtoMessage() {}
 
 func (x *FlightState) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_flight_proto_msgTypes[5]
+	mi := &file_proto_flight_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -300,12 +429,19 @@ func (x *FlightState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FlightState.ProtoReflect.Descriptor instead.
 func (*FlightState) Descriptor() ([]byte, []int) {
-	return file_proto_flight_proto_rawDescGZIP(), []int{5}
+	return file_proto_flight_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *FlightState) GetStatus() string {
 	if x != nil {
 		return x.Status
+	}
+	return ""
+}
+
+func (x *FlightState) GetGate() string {
+	if x != nil {
+		return x.Gate
 	}
 	return ""
 }
@@ -328,7 +464,7 @@ type GossipRequest struct {
 
 func (x *GossipRequest) Reset() {
 	*x = GossipRequest{}
-	mi := &file_proto_flight_proto_msgTypes[6]
+	mi := &file_proto_flight_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -340,7 +476,7 @@ func (x *GossipRequest) String() string {
 func (*GossipRequest) ProtoMessage() {}
 
 func (x *GossipRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_flight_proto_msgTypes[6]
+	mi := &file_proto_flight_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -353,7 +489,7 @@ func (x *GossipRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GossipRequest.ProtoReflect.Descriptor instead.
 func (*GossipRequest) Descriptor() ([]byte, []int) {
-	return file_proto_flight_proto_rawDescGZIP(), []int{6}
+	return file_proto_flight_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GossipRequest) GetFlightId() string {
@@ -386,7 +522,7 @@ type GossipResponse struct {
 
 func (x *GossipResponse) Reset() {
 	*x = GossipResponse{}
-	mi := &file_proto_flight_proto_msgTypes[7]
+	mi := &file_proto_flight_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -398,7 +534,7 @@ func (x *GossipResponse) String() string {
 func (*GossipResponse) ProtoMessage() {}
 
 func (x *GossipResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_flight_proto_msgTypes[7]
+	mi := &file_proto_flight_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -411,7 +547,7 @@ func (x *GossipResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GossipResponse.ProtoReflect.Descriptor instead.
 func (*GossipResponse) Descriptor() ([]byte, []int) {
-	return file_proto_flight_proto_rawDescGZIP(), []int{7}
+	return file_proto_flight_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GossipResponse) GetSuccess() bool {
@@ -425,10 +561,21 @@ var File_proto_flight_proto protoreflect.FileDescriptor
 
 const file_proto_flight_proto_rawDesc = "" +
 	"\n" +
-	"\x12proto/flight.proto\x12\x06flight\"C\n" +
+	"\x12proto/flight.proto\x12\x06flight\"\x85\x01\n" +
+	"\x12ClientWriteRequest\x12\x1b\n" +
+	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x1b\n" +
+	"\tflight_id\x18\x02 \x01(\tR\bflightId\x12\x1f\n" +
+	"\vupdate_type\x18\x03 \x01(\tR\n" +
+	"updateType\x12\x14\n" +
+	"\x05value\x18\x04 \x01(\tR\x05value\"M\n" +
+	"\x11ClientReadRequest\x12\x1b\n" +
+	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x1b\n" +
+	"\tflight_id\x18\x02 \x01(\tR\bflightId\"b\n" +
 	"\fWriteRequest\x12\x1b\n" +
-	"\tflight_id\x18\x01 \x01(\tR\bflightId\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\"m\n" +
+	"\tflight_id\x18\x01 \x01(\tR\bflightId\x12\x1f\n" +
+	"\vupdate_type\x18\x02 \x01(\tR\n" +
+	"updateType\x12\x14\n" +
+	"\x05value\x18\x03 \x01(\tR\x05value\"m\n" +
 	"\rWriteResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x17\n" +
 	"\anode_id\x18\x02 \x01(\tR\x06nodeId\x12)\n" +
@@ -441,16 +588,21 @@ const file_proto_flight_proto_rawDesc = "" +
 	"\bversions\x18\x01 \x03(\v2!.flight.VectorClock.VersionsEntryR\bversions\x1a;\n" +
 	"\rVersionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"P\n" +
+	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"d\n" +
 	"\vFlightState\x12\x16\n" +
-	"\x06status\x18\x01 \x01(\tR\x06status\x12)\n" +
-	"\x05clock\x18\x02 \x01(\v2\x13.flight.VectorClockR\x05clock\"t\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\x12\x12\n" +
+	"\x04gate\x18\x02 \x01(\tR\x04gate\x12)\n" +
+	"\x05clock\x18\x03 \x01(\v2\x13.flight.VectorClockR\x05clock\"t\n" +
 	"\rGossipRequest\x12\x1b\n" +
 	"\tflight_id\x18\x01 \x01(\tR\bflightId\x12)\n" +
 	"\x05state\x18\x02 \x01(\v2\x13.flight.FlightStateR\x05state\x12\x1b\n" +
 	"\tsender_id\x18\x03 \x01(\tR\bsenderId\"*\n" +
 	"\x0eGossipResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xb3\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\x8e\x01\n" +
+	"\vCoordinator\x12@\n" +
+	"\vClientWrite\x12\x1a.flight.ClientWriteRequest\x1a\x15.flight.WriteResponse\x12=\n" +
+	"\n" +
+	"ClientRead\x12\x19.flight.ClientReadRequest\x1a\x14.flight.ReadResponse2\xb3\x01\n" +
 	"\x0fDataNodeService\x127\n" +
 	"\x06Gossip\x12\x15.flight.GossipRequest\x1a\x16.flight.GossipResponse\x124\n" +
 	"\x05Write\x12\x14.flight.WriteRequest\x1a\x15.flight.WriteResponse\x121\n" +
@@ -468,35 +620,41 @@ func file_proto_flight_proto_rawDescGZIP() []byte {
 	return file_proto_flight_proto_rawDescData
 }
 
-var file_proto_flight_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_proto_flight_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_proto_flight_proto_goTypes = []any{
-	(*WriteRequest)(nil),   // 0: flight.WriteRequest
-	(*WriteResponse)(nil),  // 1: flight.WriteResponse
-	(*ReadRequest)(nil),    // 2: flight.ReadRequest
-	(*ReadResponse)(nil),   // 3: flight.ReadResponse
-	(*VectorClock)(nil),    // 4: flight.VectorClock
-	(*FlightState)(nil),    // 5: flight.FlightState
-	(*GossipRequest)(nil),  // 6: flight.GossipRequest
-	(*GossipResponse)(nil), // 7: flight.GossipResponse
-	nil,                    // 8: flight.VectorClock.VersionsEntry
+	(*ClientWriteRequest)(nil), // 0: flight.ClientWriteRequest
+	(*ClientReadRequest)(nil),  // 1: flight.ClientReadRequest
+	(*WriteRequest)(nil),       // 2: flight.WriteRequest
+	(*WriteResponse)(nil),      // 3: flight.WriteResponse
+	(*ReadRequest)(nil),        // 4: flight.ReadRequest
+	(*ReadResponse)(nil),       // 5: flight.ReadResponse
+	(*VectorClock)(nil),        // 6: flight.VectorClock
+	(*FlightState)(nil),        // 7: flight.FlightState
+	(*GossipRequest)(nil),      // 8: flight.GossipRequest
+	(*GossipResponse)(nil),     // 9: flight.GossipResponse
+	nil,                        // 10: flight.VectorClock.VersionsEntry
 }
 var file_proto_flight_proto_depIdxs = []int32{
-	4, // 0: flight.WriteResponse.clock:type_name -> flight.VectorClock
-	5, // 1: flight.ReadResponse.state:type_name -> flight.FlightState
-	8, // 2: flight.VectorClock.versions:type_name -> flight.VectorClock.VersionsEntry
-	4, // 3: flight.FlightState.clock:type_name -> flight.VectorClock
-	5, // 4: flight.GossipRequest.state:type_name -> flight.FlightState
-	6, // 5: flight.DataNodeService.Gossip:input_type -> flight.GossipRequest
-	0, // 6: flight.DataNodeService.Write:input_type -> flight.WriteRequest
-	2, // 7: flight.DataNodeService.Read:input_type -> flight.ReadRequest
-	7, // 8: flight.DataNodeService.Gossip:output_type -> flight.GossipResponse
-	1, // 9: flight.DataNodeService.Write:output_type -> flight.WriteResponse
-	3, // 10: flight.DataNodeService.Read:output_type -> flight.ReadResponse
-	8, // [8:11] is the sub-list for method output_type
-	5, // [5:8] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	6,  // 0: flight.WriteResponse.clock:type_name -> flight.VectorClock
+	7,  // 1: flight.ReadResponse.state:type_name -> flight.FlightState
+	10, // 2: flight.VectorClock.versions:type_name -> flight.VectorClock.VersionsEntry
+	6,  // 3: flight.FlightState.clock:type_name -> flight.VectorClock
+	7,  // 4: flight.GossipRequest.state:type_name -> flight.FlightState
+	0,  // 5: flight.Coordinator.ClientWrite:input_type -> flight.ClientWriteRequest
+	1,  // 6: flight.Coordinator.ClientRead:input_type -> flight.ClientReadRequest
+	8,  // 7: flight.DataNodeService.Gossip:input_type -> flight.GossipRequest
+	2,  // 8: flight.DataNodeService.Write:input_type -> flight.WriteRequest
+	4,  // 9: flight.DataNodeService.Read:input_type -> flight.ReadRequest
+	3,  // 10: flight.Coordinator.ClientWrite:output_type -> flight.WriteResponse
+	5,  // 11: flight.Coordinator.ClientRead:output_type -> flight.ReadResponse
+	9,  // 12: flight.DataNodeService.Gossip:output_type -> flight.GossipResponse
+	3,  // 13: flight.DataNodeService.Write:output_type -> flight.WriteResponse
+	5,  // 14: flight.DataNodeService.Read:output_type -> flight.ReadResponse
+	10, // [10:15] is the sub-list for method output_type
+	5,  // [5:10] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_proto_flight_proto_init() }
@@ -510,9 +668,9 @@ func file_proto_flight_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_flight_proto_rawDesc), len(file_proto_flight_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_proto_flight_proto_goTypes,
 		DependencyIndexes: file_proto_flight_proto_depIdxs,

@@ -4,15 +4,33 @@ package flight;
 
 option go_package = "./proto";
 
+service Coordinator {
+  rpc ClientWrite(ClientWriteRequest) returns (WriteResponse);
+  rpc ClientRead(ClientReadRequest) returns (ReadResponse);
+}
+
 service DataNodeService {
   rpc Gossip(GossipRequest) returns (GossipResponse);
   rpc Write(WriteRequest) returns (WriteResponse);
   rpc Read(ReadRequest) returns (ReadResponse);
 }
 
+message ClientWriteRequest {
+  string client_id = 1;
+  string flight_id = 2;
+  string update_type = 3;
+  string value = 4;
+}
+
+message ClientReadRequest {
+  string client_id = 1;
+  string flight_id = 2;
+}
+
 message WriteRequest {
   string flight_id = 1;
-  string status = 2;
+  string update_type = 2;
+  string value = 3;
 }
 
 message WriteResponse {
@@ -35,7 +53,8 @@ message VectorClock {
 
 message FlightState {
   string status = 1;
-  VectorClock clock = 2;
+  string gate = 2;
+  VectorClock clock = 3;
 }
 
 message GossipRequest {

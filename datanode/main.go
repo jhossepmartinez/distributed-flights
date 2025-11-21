@@ -2,14 +2,11 @@ package main
 
 import (
 	"context"
-	"encoding/csv"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
 	"net"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -104,7 +101,23 @@ func (n *Node) Gossip(ctx context.Context, req *pb.GossipRequest) (*pb.GossipRes
 		if req.State.Status > localState.Status {
 			resolvedStatus = req.State.Status
 		}
-		n.storage[req.FlightId] = &pb.FlightState{Status: resolvedStatus, Clock: mergedClock}
+		resolvedGate := localState.Gate
+		if req.State.Gate > localState.Gate {
+			resolvedGate = req.State.Gate
+		}
+
+		// Si uno de los dos tiene puerta vacía y el otro no, nos quedamos con la que tiene dato
+		if localState.Gate != "" && req.State.Gate == "" {
+			resolvedGate = localState.Gate
+		}
+		if req.State.Gate != "" && localState.Gate == "" {
+			resolvedGate = req.State.Gate
+		}
+
+		n.storage[req.FlightId] = &pb.FlightState{
+			Status: resolvedStatus, Gate: resolvedGate,
+			Clock: mergedClock,
+		}
 		log.Printf("⚔️ CONFLICTO con %s: Resuelto a '%s'", req.SenderId, resolvedStatus)
 	default:
 		n.storage[req.FlightId].Clock = mergedClock
@@ -120,7 +133,7 @@ func (n *Node) showPeriodicState() {
 			n.mu.Lock()
 			log.Printf("📊 Estado actual en nodo %s (%d vuelos):", n.id, len(n.storage))
 			for fid, st := range n.storage {
-				fmt.Printf("   - %s: [%s] Reloj: %v\n", fid, st.Status, st.Clock.Versions)
+				fmt.Printf("   - %s: [Estado: %s] [Puerta: %s] Reloj: %v\n", fid, st.Status, st.Gate, st.Clock.Versions)
 			}
 			n.mu.Unlock()
 		}
@@ -158,7 +171,7 @@ func (n *Node) sendGossipTo(address string) {
 func (n *Node) StartGossipLoop() {
 	go func() {
 		for {
-			time.Sleep(3 * time.Second)
+			time.Sleep(7 * time.Second)
 
 			if len(n.peers) == 0 {
 				continue
@@ -169,25 +182,62 @@ func (n *Node) StartGossipLoop() {
 	}()
 }
 
-func (n *Node) SimulateWrite(flightId, status string) {
+// func (n *Node) SimulateWrite(flightId, status string) {
+// 	n.mu.Lock()
+// 	defer n.mu.Unlock()
+//
+// 	state, exists := n.storage[flightId]
+// 	newVersions := make(Clock)
+//
+// 	if exists {
+// 		for k, v := range state.Clock.Versions {
+// 			newVersions[k] = v
+// 		}
+// 	}
+// 	newVersions[n.id]++
+//
+// 	n.storage[flightId] = &pb.FlightState{
+// 		Status: status,
+// 		Clock:  &pb.VectorClock{Versions: newVersions},
+// 	}
+// 	log.Printf("✏️ WRITE LOCAL: %s -> %s %v", flightId, status, newVersions)
+// }
+
+func (n *Node) Write(ctx context.Context, req *pb.WriteRequest) (*pb.WriteResponse, error) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	state, exists := n.storage[flightId]
+	state, exists := n.storage[req.FlightId]
+	var currentStatus, currentGate string
 	newVersions := make(Clock)
 
 	if exists {
+		currentStatus = state.Status
+		currentGate = state.Gate
 		for k, v := range state.Clock.Versions {
 			newVersions[k] = v
 		}
 	}
+
+	if req.UpdateType == "estado" {
+		currentStatus = req.Value
+	} else if req.UpdateType == "puerta" {
+		currentGate = req.Value
+	}
+
 	newVersions[n.id]++
 
-	n.storage[flightId] = &pb.FlightState{
-		Status: status,
+	n.storage[req.FlightId] = &pb.FlightState{
+		Status: currentStatus,
+		Gate:   currentGate,
 		Clock:  &pb.VectorClock{Versions: newVersions},
 	}
-	log.Printf("✏️ WRITE LOCAL: %s -> %s %v", flightId, status, newVersions)
+
+	return &pb.WriteResponse{
+		Success: true,
+		NodeId:  n.id,
+		Clock:   &pb.VectorClock{Versions: newVersions},
+	}, nil
 }
 
 func main() {
@@ -212,73 +262,6 @@ func main() {
 	node.StartGossipLoop()
 
 	node.showPeriodicState()
-
-	go func() {
-		// Espera inicial para que los servidores levanten
-		time.Sleep(5 * time.Second)
-
-		if id == "A" {
-			log.Println("📂 Nodo A: Iniciando lectura de flight_updates.csv...")
-
-			file, err := os.Open("flight_updates.csv")
-			if err != nil {
-				log.Printf("⚠️ No se pudo abrir flight_updates.csv: %v", err)
-				return
-			}
-			defer file.Close()
-
-			reader := csv.NewReader(file)
-
-			// Leer encabezado y descartarlo si existe
-			_, err = reader.Read()
-			if err != nil {
-				log.Printf("Error leyendo CSV: %v", err)
-				return
-			}
-
-			var lastSimTime int = 0
-
-			for {
-				record, err := reader.Read()
-				if err == io.EOF {
-					break
-				}
-				if err != nil {
-					log.Printf("Error leyendo línea CSV: %v", err)
-					continue
-				}
-
-				// Estructura CSV esperada: sim_time_sec, flight_id, update_type, update_value
-				// Ejemplo: 2, AF-021, estado, En vuelo
-				if len(record) < 4 {
-					continue
-				}
-
-				simTime, _ := strconv.Atoi(record[0])
-				flightID := record[1]
-				updateType := record[2]
-				updateValue := record[3]
-				if updateType == "puerta" {
-					continue
-				}
-
-				// Calcular cuánto esperar desde el último evento
-				delay := simTime - lastSimTime
-				if delay > 0 {
-					log.Printf("⏳ Esperando %ds para el siguiente evento...", delay)
-					time.Sleep(time.Duration(delay) * time.Second)
-				}
-				lastSimTime = simTime
-
-				// Formato descriptivo: "estado: En vuelo" o "puerta: A2"
-				fullStatus := fmt.Sprintf("%s: %s", updateType, updateValue)
-
-				// Ejecutar la escritura local
-				node.SimulateWrite(flightID, fullStatus)
-			}
-			log.Println("✅ Fin de la simulación CSV.")
-		}
-	}()
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("❌ Failed to serve: %v", err)

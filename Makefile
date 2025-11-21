@@ -1,12 +1,21 @@
-.PHONY: proto
+.PHONY: proto build build-datanode build-broker run-node-1 run-node-2 run-node-3 run-broker clean
 
-image_name = datanode
+datanode_image_name = datanode
+broker_image_name = broker
 
 proto:
 	protoc --go_out=. --go-grpc_out=. ./proto/flight.proto
 
+build-datanode:
+	docker build -f Dockerfile.datanode -t $(datanode_image_name) .
+
+build-broker:
+	docker build -f Dockerfile.broker -t $(broker_image_name) .
+
 build:
-	docker build -t $(image_name) .
+	$(MAKE) build-datanode
+	$(MAKE) build-broker
+
 
 run-node-1:
 	docker run \
@@ -15,7 +24,7 @@ run-node-1:
 		-e NODE_ID="A" \
 		-e PORT="50051" \
 		-e PEERS="192.168.1.6:50052,192.168.1.6:50053" \
-		$(image_name)
+		$(datanode_image_name)
 
 run-node-2:
 	docker run \
@@ -24,7 +33,7 @@ run-node-2:
 		-e NODE_ID="B" \
 		-e PORT="50051" \
 		-e PEERS="192.168.1.6:50051,192.168.1.6:50053" \
-		$(image_name)
+		$(datanode_image_name)
 
 run-node-3:
 	docker run \
@@ -33,7 +42,14 @@ run-node-3:
 		-e NODE_ID="C" \
 		-e PORT="50051" \
 		-e PEERS="192.168.1.6:50051,192.168.1.6:50052" \
-		$(image_name)
+		$(datanode_image_name)
+
+run-broker:
+	docker run \
+		--name broker \
+		-p 6000:6000 \
+		-e DATA_NODES_ADDRESSES="192.168.1.6:50051,192.168.1.6:50052,192.168.1.6:50053" \
+		$(broker_image_name)
 
 clean:
-	docker rm -f datanode-1 datanode-2 datanode-3
+	docker rm -f datanode-1 datanode-2 datanode-3 broker
