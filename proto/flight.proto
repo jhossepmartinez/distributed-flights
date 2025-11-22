@@ -25,6 +25,7 @@ message ClientWriteRequest {
 message ClientReadRequest {
   string client_id = 1;
   string flight_id = 2;
+  VectorClock known_versions = 3;
 }
 
 message WriteRequest {
@@ -41,6 +42,7 @@ message WriteResponse {
 
 message ReadRequest {
   string flight_id = 1;
+  VectorClock known_versions = 2;
 }
 
 message ReadResponse {

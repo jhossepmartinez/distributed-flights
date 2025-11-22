@@ -3,6 +3,8 @@
 datanode_image_name = datanode
 broker_image_name = broker
 coordinator_image_name = coordinator
+monotonic_client_name = monotonic-client
+ryw_client_name = ryw-client
 
 proto:
 	protoc --go_out=. --go-grpc_out=. ./proto/flight.proto
@@ -16,10 +18,18 @@ build-broker:
 build-coordinator:
 	docker build -f Dockerfile.coordinator -t $(coordinator_image_name) .
 
+build-monotonic-client:
+	docker build -f Dockerfile.monotonic-client -t $(monotonic_client_name) .
+
+build-ryw:
+	docker build -f Dockerfile.ryw -t $(ryw_client_name) .
+
 build:
 	$(MAKE) build-datanode
 	$(MAKE) build-broker
 	$(MAKE) build-coordinator
+	$(MAKE) build-monotonic-client
+	$(MAKE) build-ryw
 
 
 run-node-1:
@@ -64,5 +74,53 @@ run-coordinator:
 		-e DATA_NODES_ADDRESSES="A=192.168.1.6:50051,B=192.168.1.6:50052,C=192.168.1.6:50053" \
 		$(coordinator_image_name)
 
+run-monotonic-1:
+	docker run \
+		--name monotonic-1 \
+		-p 8000:8000 \
+		-e CLIENT_ID="client1" \
+		-e COORDINATOR_ADDR="192.168.1.6:7000" \
+		-e FLIGHT_ID="LA-500" \
+		$(monotonic_client_name)
+
+run-monotonic-2:
+	docker run \
+		--name monotonic-2 \
+		-p 9000:9000 \
+		-e CLIENT_ID="client2" \
+		-e COORDINATOR_ADDR="192.168.1.6:7000" \
+		-e FLIGHT_ID="AA-901" \
+		$(monotonic_client_name)
+
+
+run-ryw-1:
+	docker run \
+		--name ryw-1 \
+		-p 10000:10000 \
+		-e CLIENT_ID="ryw-1" \
+		-e FLIGHT_ID="LA-500" \
+		-e COORDINATOR_ADDR="192.168.1.6:7000" \
+		$(ryw_client_name)
+
+run-ryw-2:
+	docker run \
+		--name ryw-2 \
+		-p 11000:11000 \
+		-e CLIENT_ID="ryw-2" \
+		-e FLIGHT_ID="LA-500" \
+		-e COORDINATOR_ADDR="192.168.1.6:7000" \
+		$(ryw_client_name)
+
+run-ryw-3:
+	docker run \
+		--name ryw-3 \
+		-p 12000:12000 \
+		-e CLIENT_ID="ryw-3" \
+		-e FLIGHT_ID="AA-901" \
+		-e COORDINATOR_ADDR="192.168.1.6:7000" \
+		$(ryw_client_name)
+
+
+
 clean:
-	docker rm -f datanode-1 datanode-2 datanode-3 broker coordinator
+	docker rm -f datanode-1 datanode-2 datanode-3 broker coordinator monotonic-1 monotonic-2 ryw-1 ryw-2 ryw-3

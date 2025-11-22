@@ -93,6 +93,7 @@ type ClientReadRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	FlightId      string                 `protobuf:"bytes,2,opt,name=flight_id,json=flightId,proto3" json:"flight_id,omitempty"`
+	KnownVersions *VectorClock           `protobuf:"bytes,3,opt,name=known_versions,json=knownVersions,proto3" json:"known_versions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -139,6 +140,13 @@ func (x *ClientReadRequest) GetFlightId() string {
 		return x.FlightId
 	}
 	return ""
+}
+
+func (x *ClientReadRequest) GetKnownVersions() *VectorClock {
+	if x != nil {
+		return x.KnownVersions
+	}
+	return nil
 }
 
 type WriteRequest struct {
@@ -264,6 +272,7 @@ func (x *WriteResponse) GetClock() *VectorClock {
 type ReadRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FlightId      string                 `protobuf:"bytes,1,opt,name=flight_id,json=flightId,proto3" json:"flight_id,omitempty"`
+	KnownVersions *VectorClock           `protobuf:"bytes,2,opt,name=known_versions,json=knownVersions,proto3" json:"known_versions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -303,6 +312,13 @@ func (x *ReadRequest) GetFlightId() string {
 		return x.FlightId
 	}
 	return ""
+}
+
+func (x *ReadRequest) GetKnownVersions() *VectorClock {
+	if x != nil {
+		return x.KnownVersions
+	}
+	return nil
 }
 
 type ReadResponse struct {
@@ -575,10 +591,11 @@ const file_proto_flight_proto_rawDesc = "" +
 	"\tflight_id\x18\x02 \x01(\tR\bflightId\x12\x1f\n" +
 	"\vupdate_type\x18\x03 \x01(\tR\n" +
 	"updateType\x12\x14\n" +
-	"\x05value\x18\x04 \x01(\tR\x05value\"M\n" +
+	"\x05value\x18\x04 \x01(\tR\x05value\"\x89\x01\n" +
 	"\x11ClientReadRequest\x12\x1b\n" +
 	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x1b\n" +
-	"\tflight_id\x18\x02 \x01(\tR\bflightId\"b\n" +
+	"\tflight_id\x18\x02 \x01(\tR\bflightId\x12:\n" +
+	"\x0eknown_versions\x18\x03 \x01(\v2\x13.flight.VectorClockR\rknownVersions\"b\n" +
 	"\fWriteRequest\x12\x1b\n" +
 	"\tflight_id\x18\x01 \x01(\tR\bflightId\x12\x1f\n" +
 	"\vupdate_type\x18\x02 \x01(\tR\n" +
@@ -587,9 +604,10 @@ const file_proto_flight_proto_rawDesc = "" +
 	"\rWriteResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x17\n" +
 	"\anode_id\x18\x02 \x01(\tR\x06nodeId\x12)\n" +
-	"\x05clock\x18\x03 \x01(\v2\x13.flight.VectorClockR\x05clock\"*\n" +
+	"\x05clock\x18\x03 \x01(\v2\x13.flight.VectorClockR\x05clock\"f\n" +
 	"\vReadRequest\x12\x1b\n" +
-	"\tflight_id\x18\x01 \x01(\tR\bflightId\"9\n" +
+	"\tflight_id\x18\x01 \x01(\tR\bflightId\x12:\n" +
+	"\x0eknown_versions\x18\x02 \x01(\v2\x13.flight.VectorClockR\rknownVersions\"9\n" +
 	"\fReadResponse\x12)\n" +
 	"\x05state\x18\x01 \x01(\v2\x13.flight.FlightStateR\x05state\"\x89\x01\n" +
 	"\vVectorClock\x12=\n" +
@@ -648,27 +666,29 @@ var file_proto_flight_proto_goTypes = []any{
 	nil,                        // 11: flight.FlightState.SeatMapEntry
 }
 var file_proto_flight_proto_depIdxs = []int32{
-	6,  // 0: flight.WriteResponse.clock:type_name -> flight.VectorClock
-	7,  // 1: flight.ReadResponse.state:type_name -> flight.FlightState
-	10, // 2: flight.VectorClock.versions:type_name -> flight.VectorClock.VersionsEntry
-	11, // 3: flight.FlightState.seat_map:type_name -> flight.FlightState.SeatMapEntry
-	6,  // 4: flight.FlightState.clock:type_name -> flight.VectorClock
-	7,  // 5: flight.GossipRequest.state:type_name -> flight.FlightState
-	0,  // 6: flight.Coordinator.ClientWrite:input_type -> flight.ClientWriteRequest
-	1,  // 7: flight.Coordinator.ClientRead:input_type -> flight.ClientReadRequest
-	8,  // 8: flight.DataNodeService.Gossip:input_type -> flight.GossipRequest
-	2,  // 9: flight.DataNodeService.Write:input_type -> flight.WriteRequest
-	4,  // 10: flight.DataNodeService.Read:input_type -> flight.ReadRequest
-	3,  // 11: flight.Coordinator.ClientWrite:output_type -> flight.WriteResponse
-	5,  // 12: flight.Coordinator.ClientRead:output_type -> flight.ReadResponse
-	9,  // 13: flight.DataNodeService.Gossip:output_type -> flight.GossipResponse
-	3,  // 14: flight.DataNodeService.Write:output_type -> flight.WriteResponse
-	5,  // 15: flight.DataNodeService.Read:output_type -> flight.ReadResponse
-	11, // [11:16] is the sub-list for method output_type
-	6,  // [6:11] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	6,  // 0: flight.ClientReadRequest.known_versions:type_name -> flight.VectorClock
+	6,  // 1: flight.WriteResponse.clock:type_name -> flight.VectorClock
+	6,  // 2: flight.ReadRequest.known_versions:type_name -> flight.VectorClock
+	7,  // 3: flight.ReadResponse.state:type_name -> flight.FlightState
+	10, // 4: flight.VectorClock.versions:type_name -> flight.VectorClock.VersionsEntry
+	11, // 5: flight.FlightState.seat_map:type_name -> flight.FlightState.SeatMapEntry
+	6,  // 6: flight.FlightState.clock:type_name -> flight.VectorClock
+	7,  // 7: flight.GossipRequest.state:type_name -> flight.FlightState
+	0,  // 8: flight.Coordinator.ClientWrite:input_type -> flight.ClientWriteRequest
+	1,  // 9: flight.Coordinator.ClientRead:input_type -> flight.ClientReadRequest
+	8,  // 10: flight.DataNodeService.Gossip:input_type -> flight.GossipRequest
+	2,  // 11: flight.DataNodeService.Write:input_type -> flight.WriteRequest
+	4,  // 12: flight.DataNodeService.Read:input_type -> flight.ReadRequest
+	3,  // 13: flight.Coordinator.ClientWrite:output_type -> flight.WriteResponse
+	5,  // 14: flight.Coordinator.ClientRead:output_type -> flight.ReadResponse
+	9,  // 15: flight.DataNodeService.Gossip:output_type -> flight.GossipResponse
+	3,  // 16: flight.DataNodeService.Write:output_type -> flight.WriteResponse
+	5,  // 17: flight.DataNodeService.Read:output_type -> flight.ReadResponse
+	13, // [13:18] is the sub-list for method output_type
+	8,  // [8:13] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_proto_flight_proto_init() }

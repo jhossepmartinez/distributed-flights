@@ -113,10 +113,33 @@ func (n *Node) Gossip(ctx context.Context, req *pb.GossipRequest) (*pb.GossipRes
 		if req.State.Gate != "" && localState.Gate == "" {
 			resolvedGate = req.State.Gate
 		}
+		resolvedSeats := make(map[string]string)
+		for k, v := range localState.SeatMap {
+			resolvedSeats[k] = v
+		}
+		// print seatmaps
+		log.Printf("req.state.SeatMap: %v", req.State.SeatMap)
+		// Fusionar remoto con regla determinista
+		for seatID, remotePassenger := range req.State.SeatMap {
+			localPassenger, exists := resolvedSeats[seatID]
+			if !exists {
+				// Si no existe localmente, lo aceptamos
+				resolvedSeats[seatID] = remotePassenger
+			} else if localPassenger != remotePassenger {
+				// CONFLICTO: Mismo asiento, distinto pasajero.
+				// Regla: Gana el ID de pasajero alfabéticamente mayor
+				if remotePassenger > localPassenger {
+					resolvedSeats[seatID] = remotePassenger
+					log.Printf("⚔️ Conflicto Asiento %s: Ganó %s sobre %s", seatID, remotePassenger, localPassenger)
+				}
+			}
+		}
 
 		n.storage[req.FlightId] = &pb.FlightState{
-			Status: resolvedStatus, Gate: resolvedGate,
-			Clock: mergedClock,
+			Status:  resolvedStatus,
+			Gate:    resolvedGate,
+			SeatMap: resolvedSeats,
+			Clock:   mergedClock,
 		}
 		log.Printf("⚔️ CONFLICTO con %s: Resuelto a '%s'", req.SenderId, resolvedStatus)
 	default:
@@ -133,7 +156,11 @@ func (n *Node) showPeriodicState() {
 			n.mu.Lock()
 			log.Printf("📊 Estado actual en nodo %s (%d vuelos):", n.id, len(n.storage))
 			for fid, st := range n.storage {
-				fmt.Printf("   - %s: [Estado: %s] [Puerta: %s] Reloj: %v\n", fid, st.Status, st.Gate, st.Clock.Versions)
+				seatsStr := ""
+				for k, v := range st.SeatMap {
+					seatsStr += fmt.Sprintf("[%s:%s] ", k, v)
+				}
+				fmt.Printf("   - %s: Est:%s Pta:%s Asientos:{%s} v:%v\n", fid, st.Status, st.Gate, seatsStr, st.Clock.Versions)
 			}
 			n.mu.Unlock()
 		}
@@ -182,26 +209,30 @@ func (n *Node) StartGossipLoop() {
 	}()
 }
 
-// func (n *Node) SimulateWrite(flightId, status string) {
-// 	n.mu.Lock()
-// 	defer n.mu.Unlock()
-//
-// 	state, exists := n.storage[flightId]
-// 	newVersions := make(Clock)
-//
-// 	if exists {
-// 		for k, v := range state.Clock.Versions {
-// 			newVersions[k] = v
-// 		}
-// 	}
-// 	newVersions[n.id]++
-//
-// 	n.storage[flightId] = &pb.FlightState{
-// 		Status: status,
-// 		Clock:  &pb.VectorClock{Versions: newVersions},
-// 	}
-// 	log.Printf("✏️ WRITE LOCAL: %s -> %s %v", flightId, status, newVersions)
-// }
+// Read para monotonic clients
+func (n *Node) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadResponse, error) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	state, exists := n.storage[req.FlightId]
+
+	if !exists {
+		return nil, fmt.Errorf("vuelo %s no encontrado", req.FlightId)
+	}
+
+	if req.KnownVersions != nil && len(req.KnownVersions.Versions) > 0 {
+		relation := CompareClocks(req.KnownVersions.Versions, state.Clock.Versions)
+		if relation == "after" {
+			log.Printf("⚠️ READ RECHAZADO (Stale): Cliente pide versión %v, yo tengo %v",
+				req.KnownVersions.Versions, state.Clock.Versions)
+			return nil, fmt.Errorf("consistencia_error: data_node_stale")
+
+		}
+
+	}
+
+	return &pb.ReadResponse{State: state}, nil
+}
 
 func (n *Node) Write(ctx context.Context, req *pb.WriteRequest) (*pb.WriteResponse, error) {
 	n.mu.Lock()
@@ -210,6 +241,7 @@ func (n *Node) Write(ctx context.Context, req *pb.WriteRequest) (*pb.WriteRespon
 	state, exists := n.storage[req.FlightId]
 	var currentStatus, currentGate string
 	newVersions := make(Clock)
+	currentSeats := make(map[string]string)
 
 	if exists {
 		currentStatus = state.Status
@@ -217,20 +249,34 @@ func (n *Node) Write(ctx context.Context, req *pb.WriteRequest) (*pb.WriteRespon
 		for k, v := range state.Clock.Versions {
 			newVersions[k] = v
 		}
+		if state.SeatMap != nil {
+			for k, v := range state.SeatMap {
+				currentSeats[k] = v
+			}
+		}
 	}
 
 	if req.UpdateType == "estado" {
 		currentStatus = req.Value
 	} else if req.UpdateType == "puerta" {
 		currentGate = req.Value
+	} else if req.UpdateType == "asiento" {
+		log.Printf("🪑 Reserva de asiento recibida: %s", req.Value)
+		parts := strings.Split(req.Value, ",")
+		if len(parts) == 2 {
+			seatId := parts[0]
+			passengerId := parts[1]
+			currentSeats[seatId] = passengerId
+		}
 	}
 
 	newVersions[n.id]++
 
 	n.storage[req.FlightId] = &pb.FlightState{
-		Status: currentStatus,
-		Gate:   currentGate,
-		Clock:  &pb.VectorClock{Versions: newVersions},
+		Status:  currentStatus,
+		Gate:    currentGate,
+		SeatMap: currentSeats,
+		Clock:   &pb.VectorClock{Versions: newVersions},
 	}
 
 	return &pb.WriteResponse{

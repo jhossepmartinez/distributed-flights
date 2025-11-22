@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	pb "distributed-flights/proto"
+	"fmt"
 	"log"
 	"math/rand"
 	"net"
@@ -36,6 +37,7 @@ type Coordinator struct {
 func (c *Coordinator) ClientWrite(ctx context.Context, req *pb.ClientWriteRequest) (*pb.WriteResponse, error) {
 	log.Printf("📝 [Coordinador] ClientWrite recibido: Cliente=%s, Vuelo=%s, Tipo=%s", req.ClientId, req.FlightId, req.UpdateType)
 
+	log.Printf("DEBUG: Sesiones actuales antes de write: %v", c.sessions)
 	nodeId := c.nodeIds[rand.Intn(len(c.nodeIds))]
 	client := c.dataNodes[nodeId]
 	resp, err := client.Write(ctx, &pb.WriteRequest{
@@ -43,51 +45,80 @@ func (c *Coordinator) ClientWrite(ctx context.Context, req *pb.ClientWriteReques
 		UpdateType: req.UpdateType,
 		Value:      req.Value,
 	})
+	log.Printf("a")
 	if err != nil {
 		log.Printf("❌ Error escribiendo en nodo %s: %v", nodeId, err)
 		return nil, err
 	}
+	log.Printf("b")
 
 	c.sessionsMu.Lock()
+	log.Printf("c")
 	c.sessions[req.ClientId] = Session{
 		nodeId:    nodeId,
 		expiresAt: time.Now().Add(SESSION_TTL),
 	}
+	c.sessionsMu.Unlock()
 	log.Printf("🔒 Sesión actualizada: Cliente %s -> Nodo %s", req.ClientId, resp.NodeId)
 	return resp, nil
 }
 
+// monotonic reads for
 func (c *Coordinator) ClientRead(ctx context.Context, req *pb.ClientReadRequest) (*pb.ReadResponse, error) {
+	log.Printf("📖 [Coordinador] ClientRead recibido: Cliente=%s, Vuelo=%s", req.ClientId, req.FlightId)
 	c.sessionsMu.Lock()
 	session, exists := c.sessions[req.ClientId]
+	log.Printf("DEBUG: Sesiones actuales: %v", c.sessions)
 
 	if exists && time.Now().After(session.expiresAt) {
 		delete(c.sessions, req.ClientId)
 		exists = false
+		log.Printf("1")
 	}
+	log.Printf("2")
+	if len(c.nodeIds) == 0 {
+		log.Printf("❌ ERROR CRÍTICO: No hay DataNodes disponibles en el pool.")
+		return nil, fmt.Errorf("servicio no disponible: sin nodos de almacenamiento")
+	}
+	log.Printf("3")
 
 	c.sessionsMu.Unlock()
 
 	var targetNodeId string
 	var client pb.DataNodeServiceClient
+	log.Printf("DEBUG: Buscando conexión para nodoID: '%s' en mapa de tamaño %d", targetNodeId, len(c.dataNodes))
+
+	// reloj, nil para los ryw y el known versions para los monotonic
+	var versionToSend *pb.VectorClock = nil
+	log.Printf("4")
 
 	if exists {
+		log.Printf("5")
 		targetNodeId = session.nodeId
 		client = c.dataNodes[targetNodeId]
 		log.Printf("🔍 [Coordinador] Lectura RYW (%s): Redirigiendo a Nodo %s", req.ClientId, targetNodeId)
 	} else {
+		log.Printf("6")
+		versionToSend = req.KnownVersions
 		targetNodeId = c.nodeIds[rand.Intn(len(c.nodeIds))]
+		log.Printf("Selecting node %s for monotonic read", targetNodeId)
 		client = c.dataNodes[targetNodeId]
+		log.Printf("nodes dataNodes: %v", c.dataNodes)
 		log.Printf("🎲 [Coordinador] Lectura Aleatoria (%s): Redirigiendo a Nodo %s", req.ClientId, targetNodeId)
 	}
+	log.Printf("7")
 	resp, err := client.Read(ctx, &pb.ReadRequest{
-		FlightId: req.FlightId,
+		FlightId:      req.FlightId,
+		KnownVersions: versionToSend,
 	})
+	log.Printf("8")
 
 	if err != nil {
 		log.Printf("❌ Error leyendo en nodo %s: %v", targetNodeId, err)
+		log.Printf("9")
 		return nil, err
 	}
+	log.Printf("10")
 
 	return resp, nil
 }
