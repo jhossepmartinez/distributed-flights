@@ -54,7 +54,8 @@ message VectorClock {
 message FlightState {
   string status = 1;
   string gate = 2;
-  VectorClock clock = 3;
+  map<string, string> seat_map = 3;
+  VectorClock clock = 4;
 }
 
 message GossipRequest {
