@@ -18,7 +18,8 @@ import (
 )
 
 type Broker struct {
-	clients []pb.DataNodeServiceClient
+	clients        []pb.DataNodeServiceClient
+	trafficClients []pb.TrafficServiceClient
 }
 
 func (b *Broker) SetupClients(addresses []string) {
@@ -31,6 +32,57 @@ func (b *Broker) SetupClients(addresses []string) {
 		client := pb.NewDataNodeServiceClient(conn)
 		b.clients = append(b.clients, client)
 		log.Printf("✅ Conectado a Data Node en %s", address)
+	}
+}
+
+func (b *Broker) SetupTrafficClients(addresses []string) {
+	for _, address := range addresses {
+		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.Printf("❌ No se pudo conectar a %s: %v", address, err)
+			continue
+		}
+		client := pb.NewTrafficServiceClient(conn)
+		b.trafficClients = append(b.trafficClients, client)
+		log.Printf("Conecado a Traffic Node en %s", address)
+	}
+
+}
+
+func (b *Broker) RequestLanding(flightID string) {
+	log.Printf("🛬 Solicitando pista para vuelo %s...", flightID)
+
+	landingExitoso := false
+
+	for _, atcClient := range b.trafficClients {
+		// Timeout corto para probar rápido
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		resp, err := atcClient.RequestLanding(ctx, &pb.LandingRequest{
+			FlightId: flightID,
+		})
+		cancel()
+
+		if err != nil {
+			// Puede que el nodo esté caído, probamos el siguiente
+			continue
+		}
+
+		if resp.Success {
+			log.Printf("✅ PISTA ASIGNADA: Vuelo %s aterrizará en %s", flightID, resp.AssignedRunwayId)
+			landingExitoso = true
+			break // ¡Listo!
+		} else if resp.Message == "No soy lider" {
+			// Este nodo no es líder, seguimos iterando buscando al correcto
+			continue
+		} else {
+			// Falló por otra razón (ej: Pistas llenas)
+			log.Printf("⚠️ ATC rechazó aterrizaje: %s", resp.Message)
+			break
+		}
+	}
+
+	if !landingExitoso {
+		log.Printf("❌ No se pudo asignar pista para %s (Sin líder o Error)", flightID)
 	}
 }
 
@@ -104,6 +156,9 @@ func (b *Broker) ProcessCSV(filename string) {
 		if err != nil {
 			log.Printf("❌ Falló escritura de %s: %v", flightID, err)
 		} else {
+			if updateType == "estado" && updateValue == "En vuelo" {
+				go b.RequestLanding(flightID)
+			}
 			log.Printf("📨 Broker -> DataNode [%s]: %s | Reloj resultante: %v",
 				resp.NodeId, fullStatus, resp.Clock.Versions)
 		}
@@ -114,9 +169,15 @@ func (b *Broker) ProcessCSV(filename string) {
 func main() {
 	fmt.Printf("Hello, World!\n")
 	dataNodesAddresses := os.Getenv("DATA_NODES_ADDRESSES")
+	trafficNodesAddresses := os.Getenv("TRAFFIC_ADDRESSES")
+
+	if dataNodesAddresses == "" || trafficNodesAddresses == "" {
+		log.Fatal(" DATA_NODES_ADDRESSES o TRAFFIC_ADDRESSES no configurados")
+	}
 
 	broker := &Broker{}
 	broker.SetupClients(strings.Split(dataNodesAddresses, ","))
+	broker.SetupTrafficClients(strings.Split(trafficNodesAddresses, ","))
 	time.Sleep(6 * time.Second)
 	broker.ProcessCSV("flight_updates.csv")
 	select {}

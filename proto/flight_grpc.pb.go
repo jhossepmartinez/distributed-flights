@@ -19,6 +19,184 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	TrafficService_RequestVote_FullMethodName    = "/flight.TrafficService/RequestVote"
+	TrafficService_AppendEntries_FullMethodName  = "/flight.TrafficService/AppendEntries"
+	TrafficService_RequestLanding_FullMethodName = "/flight.TrafficService/RequestLanding"
+)
+
+// TrafficServiceClient is the client API for TrafficService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type TrafficServiceClient interface {
+	RequestVote(ctx context.Context, in *VoteRequest, opts ...grpc.CallOption) (*VoteResponse, error)
+	AppendEntries(ctx context.Context, in *AppendEntriesRequest, opts ...grpc.CallOption) (*AppendEntriesResponse, error)
+	RequestLanding(ctx context.Context, in *LandingRequest, opts ...grpc.CallOption) (*LandingResponse, error)
+}
+
+type trafficServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewTrafficServiceClient(cc grpc.ClientConnInterface) TrafficServiceClient {
+	return &trafficServiceClient{cc}
+}
+
+func (c *trafficServiceClient) RequestVote(ctx context.Context, in *VoteRequest, opts ...grpc.CallOption) (*VoteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VoteResponse)
+	err := c.cc.Invoke(ctx, TrafficService_RequestVote_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *trafficServiceClient) AppendEntries(ctx context.Context, in *AppendEntriesRequest, opts ...grpc.CallOption) (*AppendEntriesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AppendEntriesResponse)
+	err := c.cc.Invoke(ctx, TrafficService_AppendEntries_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *trafficServiceClient) RequestLanding(ctx context.Context, in *LandingRequest, opts ...grpc.CallOption) (*LandingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LandingResponse)
+	err := c.cc.Invoke(ctx, TrafficService_RequestLanding_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// TrafficServiceServer is the server API for TrafficService service.
+// All implementations must embed UnimplementedTrafficServiceServer
+// for forward compatibility.
+type TrafficServiceServer interface {
+	RequestVote(context.Context, *VoteRequest) (*VoteResponse, error)
+	AppendEntries(context.Context, *AppendEntriesRequest) (*AppendEntriesResponse, error)
+	RequestLanding(context.Context, *LandingRequest) (*LandingResponse, error)
+	mustEmbedUnimplementedTrafficServiceServer()
+}
+
+// UnimplementedTrafficServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedTrafficServiceServer struct{}
+
+func (UnimplementedTrafficServiceServer) RequestVote(context.Context, *VoteRequest) (*VoteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestVote not implemented")
+}
+func (UnimplementedTrafficServiceServer) AppendEntries(context.Context, *AppendEntriesRequest) (*AppendEntriesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AppendEntries not implemented")
+}
+func (UnimplementedTrafficServiceServer) RequestLanding(context.Context, *LandingRequest) (*LandingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RequestLanding not implemented")
+}
+func (UnimplementedTrafficServiceServer) mustEmbedUnimplementedTrafficServiceServer() {}
+func (UnimplementedTrafficServiceServer) testEmbeddedByValue()                        {}
+
+// UnsafeTrafficServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to TrafficServiceServer will
+// result in compilation errors.
+type UnsafeTrafficServiceServer interface {
+	mustEmbedUnimplementedTrafficServiceServer()
+}
+
+func RegisterTrafficServiceServer(s grpc.ServiceRegistrar, srv TrafficServiceServer) {
+	// If the following call pancis, it indicates UnimplementedTrafficServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&TrafficService_ServiceDesc, srv)
+}
+
+func _TrafficService_RequestVote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VoteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TrafficServiceServer).RequestVote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TrafficService_RequestVote_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TrafficServiceServer).RequestVote(ctx, req.(*VoteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TrafficService_AppendEntries_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AppendEntriesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TrafficServiceServer).AppendEntries(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TrafficService_AppendEntries_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TrafficServiceServer).AppendEntries(ctx, req.(*AppendEntriesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TrafficService_RequestLanding_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LandingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TrafficServiceServer).RequestLanding(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TrafficService_RequestLanding_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TrafficServiceServer).RequestLanding(ctx, req.(*LandingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// TrafficService_ServiceDesc is the grpc.ServiceDesc for TrafficService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var TrafficService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "flight.TrafficService",
+	HandlerType: (*TrafficServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RequestVote",
+			Handler:    _TrafficService_RequestVote_Handler,
+		},
+		{
+			MethodName: "AppendEntries",
+			Handler:    _TrafficService_AppendEntries_Handler,
+		},
+		{
+			MethodName: "RequestLanding",
+			Handler:    _TrafficService_RequestLanding_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "proto/flight.proto",
+}
+
+const (
 	Coordinator_ClientWrite_FullMethodName = "/flight.Coordinator/ClientWrite"
 	Coordinator_ClientRead_FullMethodName  = "/flight.Coordinator/ClientRead"
 )

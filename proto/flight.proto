@@ -4,6 +4,12 @@ package flight;
 
 option go_package = "./proto";
 
+service TrafficService {
+  rpc RequestVote(VoteRequest) returns (VoteResponse);
+  rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
+  rpc RequestLanding(LandingRequest) returns (LandingResponse);
+}
+
 service Coordinator {
   rpc ClientWrite(ClientWriteRequest) returns (WriteResponse);
   rpc ClientRead(ClientReadRequest) returns (ReadResponse);
@@ -13,6 +19,49 @@ service DataNodeService {
   rpc Gossip(GossipRequest) returns (GossipResponse);
   rpc Write(WriteRequest) returns (WriteResponse);
   rpc Read(ReadRequest) returns (ReadResponse);
+}
+
+message VoteRequest {
+  int32 term = 1;
+  string candidate_id = 2;
+  int32 last_log_index = 3;
+  int32 last_log_term = 4;
+}
+
+message VoteResponse {
+  int32 term = 1;
+  bool vote_granted = 2;
+}
+
+message LogEntry {
+  int32 term = 1;
+  string command = 2; // Ej: "ASIGNAR PISTA 1 A VUELO LA-500"
+}
+
+message AppendEntriesRequest {
+  int32 term = 1;
+  string leader_id = 2;
+  int32 prev_log_index = 3;
+  int32 prev_log_term = 4;
+  repeated LogEntry entries = 5;
+  int32 leader_commit = 6;
+}
+
+message AppendEntriesResponse {
+  int32 term = 1;
+  bool success = 2;
+}
+
+// Mensajes Cliente (Broker)
+message LandingRequest {
+  string flight_id = 1;
+}
+
+message LandingResponse {
+  bool success = 1;
+  string message = 2; // "Asignada", "Ocupada", o "No soy lider"
+  string leader_hint = 3; // ID del líder actual si se conoce
+  string assigned_runway_id = 4;
 }
 
 message ClientWriteRequest {

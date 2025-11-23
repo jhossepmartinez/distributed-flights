@@ -5,6 +5,7 @@ broker_image_name = broker
 coordinator_image_name = coordinator
 monotonic_client_name = monotonic-client
 ryw_client_name = ryw-client
+traffic_name = traffic-coordinator
 
 proto:
 	protoc --go_out=. --go-grpc_out=. ./proto/flight.proto
@@ -24,12 +25,16 @@ build-monotonic-client:
 build-ryw:
 	docker build -f Dockerfile.ryw -t $(ryw_client_name) .
 
+build-traffic:
+	docker build -f Dockerfile.traffic -t $(traffic_name) .
+
 build:
 	$(MAKE) build-datanode
 	$(MAKE) build-broker
 	$(MAKE) build-coordinator
 	$(MAKE) build-monotonic-client
 	$(MAKE) build-ryw
+	$(MAKE) build-traffic
 
 
 run-node-1:
@@ -64,6 +69,7 @@ run-broker:
 		--name broker \
 		-p 6000:6000 \
 		-e DATA_NODES_ADDRESSES="192.168.1.6:50051,192.168.1.6:50052,192.168.1.6:50053" \
+		-e TRAFFIC_ADDRESSES="192.168.1.6:13000,192.168.1.6:14000,192.168.1.6:15000" \
 		$(broker_image_name)
 
 run-coordinator:
@@ -120,7 +126,33 @@ run-ryw-3:
 		-e COORDINATOR_ADDR="192.168.1.6:7000" \
 		$(ryw_client_name)
 
+run-traffic-1:
+	docker run \
+		--name traffic-1 \
+		-p 13000:13000 \
+		-e NODE_ID="traffic-1" \
+		-e PORT="13000" \
+		-e PEERS="192.168.1.6:14000,192.168.1.6:15000" \
+		$(traffic_name)
+
+run-traffic-2:
+	docker run \
+		--name traffic-2 \
+		-p 14000:14000 \
+		-e NODE_ID="traffic-2" \
+		-e PORT="14000" \
+		-e PEERS="192.168.1.6:13000,192.168.1.6:15000" \
+		$(traffic_name)
+
+run-traffic-3:
+	docker run \
+		--name traffic-3 \
+		-p 15000:15000 \
+		-e NODE_ID="traffic-3" \
+		-e PORT="15000" \
+		-e PEERS="192.168.1.6:13000,192.168.1.6:14000" \
+		$(traffic_name)
 
 
 clean:
-	docker rm -f datanode-1 datanode-2 datanode-3 broker coordinator monotonic-1 monotonic-2 ryw-1 ryw-2 ryw-3
+	docker rm -f datanode-1 datanode-2 datanode-3 broker coordinator monotonic-1 monotonic-2 ryw-1 ryw-2 ryw-3 traffic-1 traffic-2 traffic-3
