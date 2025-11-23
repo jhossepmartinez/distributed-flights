@@ -125,7 +125,7 @@ run-ryw-1:
 		-p 10000:10000 \
 		-e CLIENT_ID="ryw-1" \
 		-e FLIGHT_ID="LA-500" \
-		-e COORDINATOR_ADDR="192.168.1.6:7000" \
+		-e COORDINATOR_ADDR="10.35.168.24:7000" \
 		$(ryw_client_name)
 
 run-ryw-2:
@@ -135,7 +135,7 @@ run-ryw-2:
 		-p 11000:11000 \
 		-e CLIENT_ID="ryw-2" \
 		-e FLIGHT_ID="LA-500" \
-		-e COORDINATOR_ADDR="192.168.1.6:7000" \
+		-e COORDINATOR_ADDR="10.35.168.24:7000" \
 		$(ryw_client_name)
 
 run-ryw-3:
@@ -145,7 +145,7 @@ run-ryw-3:
 		-p 12000:12000 \
 		-e CLIENT_ID="ryw-3" \
 		-e FLIGHT_ID="AA-901" \
-		-e COORDINATOR_ADDR="192.168.1.6:7000" \
+		-e COORDINATOR_ADDR="10.35.168.24:7000" \
 		$(ryw_client_name)
 
 run-traffic-1:
