@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  traffic-1:
+    image: traffic-coordinator
+    container_name: traffic-1
+    ports:
+      - "13000:13000"
+    environment:
+      - NODE_ID=traffic-1
+      - PORT=13000
+      # Peers 2 y 3 están en esta misma máquina (MV3)
+      - PEERS=${IP_MV3}:14000,${IP_MV3}:15000
+
+  traffic-2:
+    image: traffic-coordinator
+    container_name: traffic-2
+    ports:
+      - "14000:14000"
+    environment:
+      - NODE_ID=traffic-2
+      - PORT=14000
+      # Peers 1 y 3 están en esta misma máquina (MV3)
+      - PEERS=${IP_MV3}:13000,${IP_MV3}:15000
+
+  traffic-3:
+    image: traffic-coordinator
+    container_name: traffic-3
+    ports:
+      - "15000:15000"
+    environment:
+      - NODE_ID=traffic-3
+      - PORT=15000
+      # Peers 1 y 2 están en esta misma máquina (MV3)
+      - PEERS=${IP_MV3}:13000,${IP_MV3}:14000

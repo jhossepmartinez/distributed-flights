@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Datanode 1 (Nodo A)
+  datanode-1:
+    image: datanode
+    container_name: datanode-1
+    ports:
+      - "50051:50051"
+    environment:
+      - NODE_ID=A
+      - PORT=50051
+      # Peers: B y C están en esta misma máquina (MV1) pero en distintos puertos
+      - PEERS=${IP_MV1}:50052,${IP_MV1}:50053
+
+  # Datanode 2 (Nodo B)
+  datanode-2:
+    image: datanode
+    container_name: datanode-2
+    ports:
+      - "50052:50051"
+    environment:
+      - NODE_ID=B
+      - PORT=50051
+      # Peers: A y C están en esta misma máquina (MV1)
+      - PEERS=${IP_MV1}:50051,${IP_MV1}:50053
+
+  # Datanode 3 (Nodo C)
+  datanode-3:
+    image: datanode
+    container_name: datanode-3
+    ports:
+      - "50053:50051"
+    environment:
+      - NODE_ID=C
+      - PORT=50051
+      # Peers: A y B están en esta misma máquina (MV1)
+      - PEERS=${IP_MV1}:50051,${IP_MV1}:50052

@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  coordinator:
+    image: coordinator
+    container_name: coordinator
+    ports:
+      - "7000:7000"
+    environment:
+      - PORT=7000
+      - DATA_NODES_ADDRESSES=A=${IP_MV1}:50051,B=${IP_MV1}:50052,C=${IP_MV1}:50053

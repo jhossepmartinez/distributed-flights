@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  broker:
+    image: broker
+    container_name: broker
+    ports:
+      - "6000:6000"
+    environment:
+      # Data Nodes en MV1
+      - DATA_NODES_ADDRESSES=${IP_MV1}:50051,${IP_MV1}:50052,${IP_MV1}:50053
+      # Traffic Nodes en MV3
+      - TRAFFIC_ADDRESSES=${IP_MV3}:13000,${IP_MV3}:14000,${IP_MV3}:15000
+
+  monotonic-1:
+    image: monotonic-client
+    container_name: monotonic-1
+    ports:
+      - "8000:8000"
+    environment:
+      - CLIENT_ID=client1
+      # Coordinador en MV2
+      - COORDINATOR_ADDR=${IP_MV2}:7000
+      - FLIGHT_ID=LA-500
+
+  monotonic-2:
+    image: monotonic-client
+    container_name: monotonic-2
+    ports:
+      - "9000:9000"
+    environment:
+      - CLIENT_ID=client2
+      # Coordinador en MV2
+      - COORDINATOR_ADDR=${IP_MV2}:7000
+      - FLIGHT_ID=AA-901
