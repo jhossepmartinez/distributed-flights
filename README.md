@@ -43,10 +43,10 @@
 
 ## Como ejecutar
 
-- en vm 1 ejecutar ```make build-vm1```
-- en vm 2 ejecutar ```make build-vm2```
-- en vm 3 ejecutar ```make build-vm3```
-- en vm 4 ejecutar ```make build-vm4```
+- en vm 1, ir a ./lab3 y ejecutar ```make build-vm1```
+- en vm 2, ir a ./lab3 y ejecutar ```make build-vm2```
+- en vm 3, ir a ./lab3 y ejecutar ```make build-vm3```
+- en vm 4, ir a ./lab4 y ejecutar ```make build-vm4```
 - (opcional) si se modifica el archivo csv de prueba correr en la vm4: ```sudo make build-broker``` y luego seguir hacer ```make build-vm4```
 - en la vm 4 mantener el archivo de prueba flight_updates.csv o reemplazarlo por otro manteniendo el nombre del archivo
 - Una vez estan corriedo todos, desde la vm4 ejecutar ```make run-ryw-1```
