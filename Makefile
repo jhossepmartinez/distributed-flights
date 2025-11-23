@@ -38,6 +38,7 @@ build:
 
 
 run-node-1:
+	docker rm -f datanode-1 && \
 	docker run \
 		--name datanode-1 \
 		-p 50051:50051 \
@@ -47,6 +48,7 @@ run-node-1:
 		$(datanode_image_name)
 
 run-node-2:
+	docker rm -f datanode-2 && \
 	docker run \
 		--name datanode-2 \
 		-p 50052:50051 \
@@ -56,6 +58,7 @@ run-node-2:
 		$(datanode_image_name)
 
 run-node-3:
+	docker rm -f datanode-3 && \
 	docker run \
 		--name datanode-3 \
 		-p 50053:50051 \
@@ -65,6 +68,7 @@ run-node-3:
 		$(datanode_image_name)
 
 run-broker:
+	docker rm -f broker && \
 	docker run \
 		--name broker \
 		-p 6000:6000 \
@@ -73,6 +77,7 @@ run-broker:
 		$(broker_image_name)
 
 run-coordinator:
+	docker rm -f coordinator && \
 	docker run \
 		--name coordinator \
 		-p 7000:7000 \
@@ -81,6 +86,7 @@ run-coordinator:
 		$(coordinator_image_name)
 
 run-monotonic-1:
+	docker rm -f monotonic-1 && \
 	docker run \
 		--name monotonic-1 \
 		-p 8000:8000 \
@@ -90,6 +96,7 @@ run-monotonic-1:
 		$(monotonic_client_name)
 
 run-monotonic-2:
+	docker rm -f monotonic-2 && \
 	docker run \
 		--name monotonic-2 \
 		-p 9000:9000 \
@@ -100,6 +107,7 @@ run-monotonic-2:
 
 
 run-ryw-1:
+	docker rm -f ryw-1 && \
 	docker run \
 		--name ryw-1 \
 		-p 10000:10000 \
@@ -109,6 +117,7 @@ run-ryw-1:
 		$(ryw_client_name)
 
 run-ryw-2:
+	docker rm -f ryw-2 && \
 	docker run \
 		--name ryw-2 \
 		-p 11000:11000 \
@@ -118,6 +127,7 @@ run-ryw-2:
 		$(ryw_client_name)
 
 run-ryw-3:
+	docker rm -f ryw-3 && \
 	docker run \
 		--name ryw-3 \
 		-p 12000:12000 \
@@ -127,6 +137,7 @@ run-ryw-3:
 		$(ryw_client_name)
 
 run-traffic-1:
+	docker rm -f traffic-1 && \
 	docker run \
 		--name traffic-1 \
 		-p 13000:13000 \
@@ -136,6 +147,7 @@ run-traffic-1:
 		$(traffic_name)
 
 run-traffic-2:
+	docker rm -f traffic-2 && \
 	docker run \
 		--name traffic-2 \
 		-p 14000:14000 \
@@ -145,6 +157,7 @@ run-traffic-2:
 		$(traffic_name)
 
 run-traffic-3:
+	docker rm -f traffic-3 && \
 	docker run \
 		--name traffic-3 \
 		-p 15000:15000 \

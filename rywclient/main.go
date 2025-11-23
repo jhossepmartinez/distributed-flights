@@ -21,8 +21,9 @@ type RYWClient struct {
 // Intenta hacer Check-in en un asiento específico
 func (c *RYWClient) AttemptCheckIn(flightID string) {
 	// 1. Obtener estado actual (Read Your Writes)
+	// leer, escribir, leer
 	// Como no tenemos versión previa, mandamos nil o vacío
-	log.Printf("🎫 [Cliente %s] Consultando disponibilidad vuelo %s...", c.id, flightID)
+	log.Printf("[Cliente %s] Consultando disponibilidad vuelo %s...", c.id, flightID)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	readResp, err := c.coordinatorClient.ClientRead(ctx, &pb.ClientReadRequest{
@@ -31,13 +32,11 @@ func (c *RYWClient) AttemptCheckIn(flightID string) {
 		KnownVersions: nil,
 	})
 	cancel()
-	fmt.Printf("1")
 
 	if err != nil {
-		log.Printf("❌ Error consultando vuelo: %v", err)
+		log.Printf("Error consultando vuelo: %v", err)
 		return
 	}
-	fmt.Printf("2")
 
 	// 2. Lógica para elegir asiento (Solo hay 2: 1A y 1B)
 	targetSeat := ""
@@ -45,22 +44,17 @@ func (c *RYWClient) AttemptCheckIn(flightID string) {
 	if seats == nil {
 		seats = make(map[string]string)
 	}
-	fmt.Printf("3")
 
 	if _, occupied := seats["1A"]; !occupied {
 		targetSeat = "1A"
-		fmt.Printf("4")
 	} else if _, occupied := seats["1B"]; !occupied {
 		targetSeat = "1B"
-		fmt.Printf("5")
 	} else {
-		log.Printf("⚠️ [Cliente %s] Vuelo LLENO. No hay asientos disponibles.", c.id)
-		fmt.Printf("6")
+		log.Printf("Cliente %s] Vuelo LLENO. No hay asientos disponibles.", c.id)
 		return
 	}
-	fmt.Printf("7")
 
-	log.Printf("👉 [Cliente %s] Intentando reservar asiento %s...", c.id, targetSeat)
+	log.Printf("[Cliente %s] Intentando reservar asiento %s...", c.id, targetSeat)
 
 	// 3. Enviar Escritura (Check-In)
 	// Formato Value: "Asiento,PasajeroID"
@@ -76,13 +70,13 @@ func (c *RYWClient) AttemptCheckIn(flightID string) {
 	cancelW()
 
 	if err != nil {
-		log.Printf("❌ Falló la escritura: %v", err)
+		log.Printf("Falló la escritura: %v", err)
 		return
 	}
 
 	// 4. VERIFICACIÓN (Read Your Writes)
-	// El Coordinador debe redirigirnos al mismo nodo donde escribimos.
-	time.Sleep(500 * time.Millisecond) // Pequeña pausa dramática
+	// El Coordinador  nos redirige al nodo de la sesion
+	time.Sleep(500 * time.Millisecond) // Pequeña pausa simulando latencia VM
 
 	ctxR, cancelR := context.WithTimeout(context.Background(), 2*time.Second)
 	verifyResp, err := c.coordinatorClient.ClientRead(ctxR, &pb.ClientReadRequest{
@@ -92,16 +86,16 @@ func (c *RYWClient) AttemptCheckIn(flightID string) {
 	cancelR()
 
 	if err != nil {
-		log.Printf("❌ Error verificando: %v", err)
+		log.Printf("Error verificando: %v", err)
 		return
 	}
 
 	// Comprobamos si el asiento es nuestro
 	owner, ok := verifyResp.State.SeatMap[targetSeat]
 	if ok && owner == c.id {
-		log.Printf("✅ [Cliente %s] ¡CHECK-IN EXITOSO! Tengo el asiento %s (Confirmado por RYW)", c.id, targetSeat)
+		log.Printf("[Cliente %s] ¡CHECK-IN EXITOSO! Tengo el asiento %s (Confirmado por RYW)", c.id, targetSeat)
 	} else {
-		log.Printf("💔 [Cliente %s] Check-in FALLIDO. El asiento %s lo tiene: %s (Conflicto o Error)", c.id, targetSeat, owner)
+		log.Printf("[Cliente %s] Check-in FALLIDO. El asiento %s lo tiene: %s (Conflicto o Error)", c.id, targetSeat, owner)
 	}
 }
 
@@ -110,10 +104,10 @@ func main() {
 	if clientID == "" {
 		log.Fatal("CLIENT_ID no está definido")
 	}
-	log.Printf("🔵 Cliente RYW %s iniciando...", clientID)
+	log.Printf("Cliente RYW %s iniciando...", clientID)
 
 	coordAddr := os.Getenv("COORDINATOR_ADDR") // Ej: "localhost:50055"
-	log.Printf("🔵 Cliente RYW %s iniciando. Conectando al Coordinador en %s", clientID, coordAddr)
+	log.Printf("Cliente RYW %s iniciando. Conectando al Coordinador en %s", clientID, coordAddr)
 
 	if coordAddr == "" {
 		log.Fatal("COORDINATOR_ADDR no está definido")
@@ -133,7 +127,7 @@ func main() {
 	// Simular comportamiento
 	flightID := os.Getenv("FLIGHT_ID") // Asegúrate que este vuelo exista (creado por Broker)
 
-	log.Printf("🏃 Cliente %s iniciando proceso de check-in...", clientID)
+	log.Printf("Cliente %s iniciando proceso de check-in...", clientID)
 
 	// Intentar hacer check-in
 	client.AttemptCheckIn(flightID)

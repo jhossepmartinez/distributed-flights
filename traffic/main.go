@@ -58,7 +58,6 @@ func (n *Node) RequestLanding(ctx context.Context, req *pb.LandingRequest) (*pb.
 		return &pb.LandingResponse{Success: false, Message: "No soy lider", LeaderHint: leader}, nil
 	}
 
-	// 2. ASIGNACIÓN ALEATORIA INTELIGENTE
 	// Intentamos buscar una pista libre probando en orden aleatorio
 	selectedRunway := ""
 
@@ -77,7 +76,7 @@ func (n *Node) RequestLanding(ctx context.Context, req *pb.LandingRequest) (*pb.
 	// Si después de revisar todas no hay ninguna libre:
 	if selectedRunway == "" {
 		n.mu.Unlock()
-		log.Printf("⚠️ [LIDER] Aeropuerto lleno. Rechazando vuelo %s", req.FlightId)
+		log.Printf("[LIDER] Aeropuerto lleno. Rechazando vuelo %s", req.FlightId)
 		return &pb.LandingResponse{Success: false, Message: "Todas las pistas ocupadas"}, nil
 	}
 
@@ -91,15 +90,16 @@ func (n *Node) RequestLanding(ctx context.Context, req *pb.LandingRequest) (*pb.
 	logIndex := int32(len(n.log) - 1)
 	n.mu.Unlock()
 
-	log.Printf("📝 [LIDER] Propuesta creada: Asignar %s a %s (Index: %d). Replicando...", selectedRunway, req.FlightId, logIndex)
+	log.Printf("[LIDER] Propuesta creada: Asignar %s a %s (Index: %d). Replicando...", selectedRunway, req.FlightId, logIndex)
 
-	// 4. Esperar Consenso (Polling simple)
+	// 4. Esperar Consenso
 	for i := 0; i < 20; i++ { // Esperamos hasta 2 segundos aprox (20 * 100ms)
 		time.Sleep(100 * time.Millisecond)
 		n.mu.Lock()
 		if n.commitIndex >= logIndex {
 			n.mu.Unlock()
-			log.Printf("✅ [LIDER] Consenso alcanzado. %s asignada a %s.", selectedRunway, req.FlightId)
+			log.Printf("[LIDER] Consenso alcanzado. %s asignada a %s.", selectedRunway, req.FlightId)
+			log.Printf("[DEBUG log actualizado: %+v", n.log)
 
 			return &pb.LandingResponse{
 				Success:          true,
@@ -128,7 +128,7 @@ func (n *Node) RequestVote(ctx context.Context, req *pb.VoteRequest) (*pb.VoteRe
 		voteGranted = true
 		n.votedFor = req.CandidateId
 		n.voteCh <- true // Reiniciar timer de elección
-		log.Printf("🗳️ Voto otorgado a %s para termino %d", req.CandidateId, req.Term)
+		log.Printf("voto otorgado a %s para termino %d", req.CandidateId, req.Term)
 	}
 
 	return &pb.VoteResponse{Term: n.currentTerm, VoteGranted: voteGranted}, nil
@@ -148,7 +148,7 @@ func (n *Node) AppendEntries(ctx context.Context, req *pb.AppendEntriesRequest) 
 		n.state = Follower
 		n.leaderId = req.LeaderId
 
-		// Importante: Usamos select default para no bloquear si el canal está lleno
+		// select no bloquea el canal
 		select {
 		case n.heartbeatCh <- true:
 		default:
@@ -165,7 +165,6 @@ func (n *Node) AppendEntries(ctx context.Context, req *pb.AppendEntriesRequest) 
 			}
 			n.log = newLog
 
-			log.Printf("DEBUG log actualizado: %+v", n.log)
 		}
 
 		if req.LeaderCommit > n.commitIndex {
@@ -174,7 +173,7 @@ func (n *Node) AppendEntries(ctx context.Context, req *pb.AppendEntriesRequest) 
 			} else {
 				n.commitIndex = int32(len(n.log)) - 1
 			}
-			log.Printf("⚙️ [FOLLOWER] Commit Index actualizado a %d", n.commitIndex)
+			log.Printf("[FOLLOWER] Commit Index actualizado a %d", n.commitIndex)
 		}
 	}
 
@@ -185,7 +184,7 @@ func (n *Node) becomeFollower(term int32) {
 	n.state = Follower
 	n.currentTerm = term
 	n.votedFor = ""
-	log.Printf("⬇️ Soy SEGUIDOR (Term: %d)", n.currentTerm)
+	log.Printf("- Soy SEGUIDOR (Term: %d)", n.currentTerm)
 }
 
 func (n *Node) runElectionTimer() {
@@ -210,9 +209,9 @@ func (n *Node) startElection() {
 	n.currentTerm++
 	n.votedFor = n.id
 	votes := 1 // Voto por mí mismo
-	log.Printf("✋ Iniciando ELECCIÓN (Term: %d)", n.currentTerm)
+	log.Printf(" Iniciando ELECCIÓN (Term: %d)", n.currentTerm)
 
-	// Pedir votos a los peers en paralelo
+	// Pedir votos a los otros nodos de trafico
 	for _, peer := range n.peers {
 		go func(addr string) {
 			conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -249,7 +248,7 @@ func (n *Node) becomeLeader() {
 	n.leaderId = n.id
 	log.Printf(" ¡SOY EL LÍDER! (Term: %d)", n.currentTerm)
 
-	// Iniciar loop de heartbeat inmediato
+	// Iniciar loop de heartbeat
 	go n.sendHeartbeats()
 }
 
@@ -265,26 +264,21 @@ func (n *Node) sendHeartbeats() {
 		id := n.id
 		leaderCommit := n.commitIndex
 
-		// --- CORRECCIÓN 1: Enviar el Log Real, no vacío ---
-		// Para simplificar el lab, enviamos TODO el log en cada heartbeat.
-		// (En producción esto sería ineficiente, pero garantiza convergencia aquí).
+		//  enviamos TODO el log en cada heartbeat.
 		var entries []*pb.LogEntry
 		for _, l := range n.log {
 			entries = append(entries, &pb.LogEntry{Term: l.Term, Command: l.Command})
 		}
 
-		// El índice que estamos intentando replicar es el último del log
+		// replicar ultimo log
 		targetIndex := int32(len(n.log) - 1)
 
 		n.mu.Unlock()
 
-		// Contador de ACKs (El líder ya tiene la entrada, así que empieza en 1)
+		// Contador de ACKs (1 por el lider)
 		acks := 1
 		totalNodes := len(n.peers) + 1
 		quorum := totalNodes/2 + 1
-
-		// Usamos WaitGroup para esperar a que los RPCs terminen (o timeout) antes de evaluar quórum
-		// O simplemente lanzamos goroutines y protegemos 'acks' con mutex.
 
 		for _, peer := range n.peers {
 			go func(addr string) {
@@ -312,14 +306,13 @@ func (n *Node) sendHeartbeats() {
 						return
 					}
 
+					// conteo de votos
 					if resp.Success {
-						// --- CORRECCIÓN 2: Contar ACKs y Avanzar Commit ---
 						acks++
 						if acks >= quorum {
-							// Si alcanzamos mayoría y el target es mayor al commit actual, avanzamos.
 							if targetIndex > n.commitIndex {
 								n.commitIndex = targetIndex
-								log.Printf("✅ [LIDER] CommitIndex avanzado a %d (Quórum alcanzado)", n.commitIndex)
+								log.Printf("[LIDER] CommitIndex avanzado a %d (Quórum alcanzado)", n.commitIndex)
 							}
 						}
 					}
@@ -327,12 +320,11 @@ func (n *Node) sendHeartbeats() {
 			}(peer)
 		}
 
-		// Aumentamos frecuencia a 500ms para que reaccione antes de los 2s del Broker
 		time.Sleep(500 * time.Millisecond)
 	}
 }
 
-// Verifica si una pista está tomada en el Log COMPROMETIDO
+// Verifica si una pista está tomada en el Log
 func (n *Node) isRunwayTaken(runwayID string) bool {
 	for i := int32(0); i <= n.commitIndex && i < int32(len(n.log)); i++ {
 		entry := n.log[i]
@@ -344,12 +336,10 @@ func (n *Node) isRunwayTaken(runwayID string) bool {
 	return false
 }
 
-// --- MAIN ---
-
 func main() {
-	id := os.Getenv("NODE_ID")     // Ej: "ATC-1"
-	port := os.Getenv("PORT")      // Ej: "50060"
-	peersEnv := os.Getenv("PEERS") // Ej: "10.0.0.2:50060,10.0.0.3:50060"
+	id := os.Getenv("NODE_ID")
+	port := os.Getenv("PORT")
+	peersEnv := os.Getenv("PEERS")
 
 	node := &Node{
 		id:          id,
@@ -365,7 +355,6 @@ func main() {
 	// Iniciar lógica Raft
 	go node.runElectionTimer()
 
-	// Servidor gRPC
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatal(err)
@@ -373,6 +362,6 @@ func main() {
 	grpcServer := grpc.NewServer()
 	pb.RegisterTrafficServiceServer(grpcServer, node)
 
-	log.Printf("✈️ Nodo ATC %s escuchando en %s", id, port)
+	log.Printf(" Nodo Trafico %s escuchando en %s", id, port)
 	grpcServer.Serve(lis)
 }

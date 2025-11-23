@@ -47,25 +47,23 @@ func (c *Coordinator) ClientWrite(ctx context.Context, req *pb.ClientWriteReques
 	})
 	log.Printf("a")
 	if err != nil {
-		log.Printf("❌ Error escribiendo en nodo %s: %v", nodeId, err)
+		log.Printf(" Error escribiendo en nodo %s: %v", nodeId, err)
 		return nil, err
 	}
-	log.Printf("b")
 
 	c.sessionsMu.Lock()
-	log.Printf("c")
 	c.sessions[req.ClientId] = Session{
 		nodeId:    nodeId,
 		expiresAt: time.Now().Add(SESSION_TTL),
 	}
 	c.sessionsMu.Unlock()
-	log.Printf("🔒 Sesión actualizada: Cliente %s -> Nodo %s", req.ClientId, resp.NodeId)
+	log.Printf("Sesión actualizada: Cliente %s -> Nodo %s", req.ClientId, resp.NodeId)
 	return resp, nil
 }
 
 // monotonic reads for
 func (c *Coordinator) ClientRead(ctx context.Context, req *pb.ClientReadRequest) (*pb.ReadResponse, error) {
-	log.Printf("📖 [Coordinador] ClientRead recibido: Cliente=%s, Vuelo=%s", req.ClientId, req.FlightId)
+	log.Printf("[Coordinador] ClientRead recibido: Cliente=%s, Vuelo=%s", req.ClientId, req.FlightId)
 	c.sessionsMu.Lock()
 	session, exists := c.sessions[req.ClientId]
 	log.Printf("DEBUG: Sesiones actuales: %v", c.sessions)
@@ -73,14 +71,11 @@ func (c *Coordinator) ClientRead(ctx context.Context, req *pb.ClientReadRequest)
 	if exists && time.Now().After(session.expiresAt) {
 		delete(c.sessions, req.ClientId)
 		exists = false
-		log.Printf("1")
 	}
-	log.Printf("2")
 	if len(c.nodeIds) == 0 {
-		log.Printf("❌ ERROR CRÍTICO: No hay DataNodes disponibles en el pool.")
+		log.Printf("ERROR CRÍTICO: No hay DataNodes disponibles en el pool.")
 		return nil, fmt.Errorf("servicio no disponible: sin nodos de almacenamiento")
 	}
-	log.Printf("3")
 
 	c.sessionsMu.Unlock()
 
@@ -90,35 +85,28 @@ func (c *Coordinator) ClientRead(ctx context.Context, req *pb.ClientReadRequest)
 
 	// reloj, nil para los ryw y el known versions para los monotonic
 	var versionToSend *pb.VectorClock = nil
-	log.Printf("4")
 
 	if exists {
-		log.Printf("5")
 		targetNodeId = session.nodeId
 		client = c.dataNodes[targetNodeId]
-		log.Printf("🔍 [Coordinador] Lectura RYW (%s): Redirigiendo a Nodo %s", req.ClientId, targetNodeId)
+		log.Printf(" [Coordinador] Lectura RYW (%s): Redirigiendo a Nodo %s", req.ClientId, targetNodeId)
 	} else {
-		log.Printf("6")
 		versionToSend = req.KnownVersions
 		targetNodeId = c.nodeIds[rand.Intn(len(c.nodeIds))]
 		log.Printf("Selecting node %s for monotonic read", targetNodeId)
 		client = c.dataNodes[targetNodeId]
 		log.Printf("nodes dataNodes: %v", c.dataNodes)
-		log.Printf("🎲 [Coordinador] Lectura Aleatoria (%s): Redirigiendo a Nodo %s", req.ClientId, targetNodeId)
+		log.Printf("[Coordinador] Lectura Aleatoria (%s): Redirigiendo a Nodo %s", req.ClientId, targetNodeId)
 	}
-	log.Printf("7")
 	resp, err := client.Read(ctx, &pb.ReadRequest{
 		FlightId:      req.FlightId,
 		KnownVersions: versionToSend,
 	})
-	log.Printf("8")
 
 	if err != nil {
-		log.Printf("❌ Error leyendo en nodo %s: %v", targetNodeId, err)
-		log.Printf("9")
+		log.Printf("Error leyendo en nodo %s: %v", targetNodeId, err)
 		return nil, err
 	}
-	log.Printf("10")
 
 	return resp, nil
 }
@@ -127,7 +115,7 @@ func main() {
 	port := os.Getenv("PORT")
 	dataNodesEnv := os.Getenv("DATA_NODES_ADDRESSES")
 	if port == "" || dataNodesEnv == "" {
-		log.Fatal("❌ Faltan variables de entorno PORT o DATA_NODES_ADDRESSES")
+		log.Fatal(" Faltan variables de entorno PORT o DATA_NODES_ADDRESSES")
 	}
 
 	coordinator := &Coordinator{
@@ -140,7 +128,7 @@ func main() {
 		// Se espera formato "ID=ADDRESS" (Ej: A=localhost:50051)
 		parts := strings.Split(pair, "=")
 		if len(parts) != 2 {
-			log.Printf("⚠️ Formato de dirección incorrecto: %s (se espera ID=ADDR)", pair)
+			log.Printf("Formato de dirección incorrecto: %s (se espera ID=ADDR)", pair)
 			continue
 		}
 		nodeID := strings.TrimSpace(parts[0])
@@ -148,24 +136,24 @@ func main() {
 
 		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Fatalf("❌ No se pudo conectar al DataNode %s (%s): %v", nodeID, address, err)
+			log.Fatalf("No se pudo conectar al DataNode %s (%s): %v", nodeID, address, err)
 		}
 
 		coordinator.dataNodes[nodeID] = pb.NewDataNodeServiceClient(conn)
 		coordinator.nodeIds = append(coordinator.nodeIds, nodeID) // Guardar ID para random picking
-		log.Printf("✅ Coordinador conectado a DataNode %s en %s", nodeID, address)
+		log.Printf("coordinador conectado a DataNode %s en %s", nodeID, address)
 	}
 
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatalf("❌ Fallo al escuchar en puerto %s: %v", port, err)
+		log.Fatalf("Fallo al escuchar en puerto %s: %v", port, err)
 	}
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterCoordinatorServer(grpcServer, coordinator)
 
-	log.Printf("🚀 Coordinador listo y escuchando en puerto %s", port)
+	log.Printf("Coordinador listo y escuchando en puerto %s", port)
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("❌ Fallo al servir: %v", err)
+		log.Fatalf("Fallo al servir: %v", err)
 	}
 }

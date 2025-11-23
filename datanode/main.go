@@ -85,7 +85,7 @@ func (n *Node) Gossip(ctx context.Context, req *pb.GossipRequest) (*pb.GossipRes
 
 	if !exists {
 		n.storage[req.FlightId] = req.State
-		log.Printf("📥 GOSSIP RECIBIDO de %s: Nuevo dato aceptado -> %s", req.SenderId, req.FlightId)
+		log.Printf("GOSSIP RECIBIDO de %s: Nuevo dato aceptado -> %s", req.SenderId, req.FlightId)
 		return &pb.GossipResponse{Success: true}, nil
 	}
 
@@ -95,7 +95,7 @@ func (n *Node) Gossip(ctx context.Context, req *pb.GossipRequest) (*pb.GossipRes
 	switch relation {
 	case "after":
 		n.storage[req.FlightId] = req.State
-		log.Printf("📥 GOSSIP UPDATE de %s: Actualizado (Newer)", req.SenderId)
+		log.Printf("GOSSIP UPDATE de %s: Actualizado (Newer)", req.SenderId)
 	case "concurrent":
 		resolvedStatus := localState.Status
 		if req.State.Status > localState.Status {
@@ -141,10 +141,10 @@ func (n *Node) Gossip(ctx context.Context, req *pb.GossipRequest) (*pb.GossipRes
 			SeatMap: resolvedSeats,
 			Clock:   mergedClock,
 		}
-		log.Printf("⚔️ CONFLICTO con %s: Resuelto a '%s'", req.SenderId, resolvedStatus)
+		log.Printf("ONFLICTO con %s: Resuelto a '%s'", req.SenderId, resolvedStatus)
 	default:
 		n.storage[req.FlightId].Clock = mergedClock
-		log.Printf("📥 GOSSIP RECIBIDO de %s: Ignorado (Older or Equal)", req.SenderId)
+		log.Printf("GOSSIP RECIBIDO de %s: Ignorado (Older or Equal)", req.SenderId)
 	}
 	return &pb.GossipResponse{Success: true}, nil
 }
@@ -154,7 +154,7 @@ func (n *Node) showPeriodicState() {
 		for {
 			time.Sleep(10 * time.Second)
 			n.mu.Lock()
-			log.Printf("📊 Estado actual en nodo %s (%d vuelos):", n.id, len(n.storage))
+			log.Printf("Estado actual en nodo %s (%d vuelos):", n.id, len(n.storage))
 			for fid, st := range n.storage {
 				seatsStr := ""
 				for k, v := range st.SeatMap {
@@ -171,7 +171,7 @@ func (n *Node) showPeriodicState() {
 func (n *Node) sendGossipTo(address string) {
 	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Printf("❌ No se pudo conectar a %s: %v", address, err)
+		log.Printf("No se pudo conectar a %s: %v", address, err)
 	}
 	defer conn.Close()
 	client := pb.NewDataNodeServiceClient(conn)
@@ -190,7 +190,7 @@ func (n *Node) sendGossipTo(address string) {
 			SenderId: n.id,
 		})
 		if err != nil {
-			log.Printf("📤 GOSSIP ENVIADO a %s: Vuelo %s", address, flightId)
+			log.Printf(" GOSSIP ENVIADO a %s: Vuelo %s", address, flightId)
 		}
 	}
 }
@@ -223,7 +223,7 @@ func (n *Node) Read(ctx context.Context, req *pb.ReadRequest) (*pb.ReadResponse,
 	if req.KnownVersions != nil && len(req.KnownVersions.Versions) > 0 {
 		relation := CompareClocks(req.KnownVersions.Versions, state.Clock.Versions)
 		if relation == "after" {
-			log.Printf("⚠️ READ RECHAZADO (Stale): Cliente pide versión %v, yo tengo %v",
+			log.Printf("EAD RECHAZADO: Cliente pide versión %v, yo tengo %v",
 				req.KnownVersions.Versions, state.Clock.Versions)
 			return nil, fmt.Errorf("consistencia_error: data_node_stale")
 
@@ -261,7 +261,7 @@ func (n *Node) Write(ctx context.Context, req *pb.WriteRequest) (*pb.WriteRespon
 	} else if req.UpdateType == "puerta" {
 		currentGate = req.Value
 	} else if req.UpdateType == "asiento" {
-		log.Printf("🪑 Reserva de asiento recibida: %s", req.Value)
+		log.Printf("Reserva de asiento recibida: %s", req.Value)
 		parts := strings.Split(req.Value, ",")
 		if len(parts) == 2 {
 			seatId := parts[0]
@@ -299,7 +299,7 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatalf("❌ Failed to listen: %v", err)
+		log.Fatalf("Failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
@@ -310,6 +310,6 @@ func main() {
 	node.showPeriodicState()
 
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("❌ Failed to serve: %v", err)
+		log.Fatalf("Failed to serve: %v", err)
 	}
 }

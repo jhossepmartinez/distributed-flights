@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"google.golang.org/grpc"
@@ -20,18 +21,42 @@ import (
 type Broker struct {
 	clients        []pb.DataNodeServiceClient
 	trafficClients []pb.TrafficServiceClient
+
+	reportFile *os.File
+	reportMu   sync.Mutex
+}
+
+func (b *Broker) WriteToReport(flightID, runwayID string) {
+	log.Printf(" Escribiendo en reporte: Vuelo %s asignado a Pista %s", flightID, runwayID)
+	b.reportMu.Lock()
+	defer b.reportMu.Unlock()
+
+	if b.reportFile == nil {
+		log.Printf("Archivo de reporte no está abierto")
+		return
+	}
+
+	// Formato: [FECHA HORA] Operacion: Asignacion Pista | Vuelo: ID | Pista: ID
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+	line := fmt.Sprintf("[%s] Operacion: Asignacion Pista | Vuelo: %s | Pista: %s\n", timestamp, flightID, runwayID)
+
+	_, err := b.reportFile.WriteString(line)
+	log.Printf(" Línea escrita en reporte: %s", line)
+	if err != nil {
+		log.Printf("Error escribiendo en reporte: %v", err)
+	}
 }
 
 func (b *Broker) SetupClients(addresses []string) {
 	for _, address := range addresses {
 		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Printf("❌ No se pudo conectar a %s: %v", address, err)
+			log.Printf(" No se pudo conectar a %s: %v", address, err)
 			continue
 		}
 		client := pb.NewDataNodeServiceClient(conn)
 		b.clients = append(b.clients, client)
-		log.Printf("✅ Conectado a Data Node en %s", address)
+		log.Printf(" Conectado a Data Node en %s", address)
 	}
 }
 
@@ -39,7 +64,7 @@ func (b *Broker) SetupTrafficClients(addresses []string) {
 	for _, address := range addresses {
 		conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Printf("❌ No se pudo conectar a %s: %v", address, err)
+			log.Printf(" No se pudo conectar a %s: %v", address, err)
 			continue
 		}
 		client := pb.NewTrafficServiceClient(conn)
@@ -68,21 +93,22 @@ func (b *Broker) RequestLanding(flightID string) {
 		}
 
 		if resp.Success {
-			log.Printf("✅ PISTA ASIGNADA: Vuelo %s aterrizará en %s", flightID, resp.AssignedRunwayId)
+			log.Printf("PISTA ASIGNADA: Vuelo %s aterrizará en %s", flightID, resp.AssignedRunwayId)
 			landingExitoso = true
+			b.WriteToReport(flightID, resp.AssignedRunwayId)
 			break // ¡Listo!
 		} else if resp.Message == "No soy lider" {
 			// Este nodo no es líder, seguimos iterando buscando al correcto
 			continue
 		} else {
 			// Falló por otra razón (ej: Pistas llenas)
-			log.Printf("⚠️ ATC rechazó aterrizaje: %s", resp.Message)
+			log.Printf("Trafico rechazó aterrizaje: %s", resp.Message)
 			break
 		}
 	}
 
 	if !landingExitoso {
-		log.Printf("❌ No se pudo asignar pista para %s (Sin líder o Error)", flightID)
+		log.Printf(" No se pudo asignar pista para %s (Sin líder o Error)", flightID)
 	}
 }
 
@@ -94,11 +120,20 @@ func (b *Broker) GetRandomClient() pb.DataNodeServiceClient {
 }
 
 func (b *Broker) ProcessCSV(filename string) {
-	log.Println("📂 Broker: Iniciando procesamiento de CSV...")
+	log.Println(" Broker: Iniciando procesamiento de CSV...")
+	f, err := os.Create("reporte.txt")
+	if err != nil {
+		log.Fatalf(" No se pudo crear archivo de reporte: %v", err)
+	}
+	b.reportFile = f
+	defer func() {
+		b.reportFile.Close()
+		log.Println(" Cerrando archivo de reporte.")
+	}()
 
 	file, err := os.Open(filename)
 	if err != nil {
-		log.Fatalf("⚠️ No se pudo abrir %s: %v", filename, err)
+		log.Fatalf("No se pudo abrir %s: %v", filename, err)
 	}
 	defer file.Close()
 
@@ -132,7 +167,7 @@ func (b *Broker) ProcessCSV(filename string) {
 		// 1. Simular espera temporal
 		delay := simTime - lastSimTime
 		if delay > 0 {
-			log.Printf("⏳ Broker esperando %ds...", delay)
+			log.Printf("Broker esperando %ds...", delay)
 			time.Sleep(time.Duration(delay) * time.Second)
 		}
 		lastSimTime = simTime
@@ -140,7 +175,7 @@ func (b *Broker) ProcessCSV(filename string) {
 		// 2. Seleccionar DataNode destino
 		client := b.GetRandomClient()
 		if client == nil {
-			log.Println("❌ Error: No hay DataNodes disponibles para escribir")
+			log.Println("Error: No hay DataNodes disponibles para escribir")
 			continue
 		}
 
@@ -154,16 +189,16 @@ func (b *Broker) ProcessCSV(filename string) {
 		cancel()
 
 		if err != nil {
-			log.Printf("❌ Falló escritura de %s: %v", flightID, err)
+			log.Printf(" Falló escritura de %s: %v", flightID, err)
 		} else {
-			if updateType == "estado" && updateValue == "En vuelo" {
+			if updateType == "estado" && updateValue == "Embarcando" {
 				go b.RequestLanding(flightID)
 			}
-			log.Printf("📨 Broker -> DataNode [%s]: %s | Reloj resultante: %v",
-				resp.NodeId, fullStatus, resp.Clock.Versions)
+			log.Printf("Broker -> Vuelo %s - DataNode [%s]: %s | Reloj resultante: %v",
+				flightID, resp.NodeId, fullStatus, resp.Clock.Versions)
 		}
 	}
-	log.Println("🏁 Fin del archivo CSV")
+	log.Println("Fin del archivo CSV")
 }
 
 func main() {
