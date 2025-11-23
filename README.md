@@ -5,6 +5,7 @@
 
 ## Consideraciones
 
+- Todas las imagenes ya estan compiladas
 - Cada avion solo tiene 2 asientos, 1A y 1B
 - Los clientes RYW se deben ejecutar manualmente cuando estan corriendo el broker, datanodes, coordinador
 - Los conflictos por concurrecia se manejan por orden alfabetico

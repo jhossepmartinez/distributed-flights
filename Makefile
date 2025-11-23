@@ -155,7 +155,7 @@ run-traffic-1:
 		-p 13000:13000 \
 		-e NODE_ID="traffic-1" \
 		-e PORT="13000" \
-		-e PEERS="192.168.1.6:14000,192.168.1.6:15000" \
+		-e PEERS="10.35.168.26:14000,10.35.168.26:15000" \
 		$(traffic_name)
 
 run-traffic-2:
@@ -165,7 +165,7 @@ run-traffic-2:
 		-p 14000:14000 \
 		-e NODE_ID="traffic-2" \
 		-e PORT="14000" \
-		-e PEERS="192.168.1.6:13000,192.168.1.6:15000" \
+		-e PEERS="10.35.168.26:13000,10.35.168.26:15000" \
 		$(traffic_name)
 
 run-traffic-3:
@@ -175,9 +175,8 @@ run-traffic-3:
 		-p 15000:15000 \
 		-e NODE_ID="traffic-3" \
 		-e PORT="15000" \
-		-e PEERS="192.168.1.6:13000,192.168.1.6:14000" \
+		-e PEERS="10.35.168.26:13000,10.35.168.26:14000" \
 		$(traffic_name)
-
 
 clean:
 	docker rm -f datanode-1 datanode-2 datanode-3 broker coordinator monotonic-1 monotonic-2 ryw-1 ryw-2 ryw-3 traffic-1 traffic-2 traffic-3
