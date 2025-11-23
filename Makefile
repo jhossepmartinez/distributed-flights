@@ -28,6 +28,18 @@ build-ryw:
 build-traffic:
 	docker build -f Dockerfile.traffic -t $(traffic_name) .
 
+build-vm1: clean
+	sudo docker compose -f docker-compose.vm1.yaml up
+
+build-vm2: clean
+	sudo docker compose -f docker-compose.vm2.yaml up
+
+build-vm3: clean
+	sudo docker compose -f docker-compose.vm3.yaml up
+
+build-vm4: clean
+	sudo docker compose -f docker-compose.vm4.yaml up
+
 build:
 	$(MAKE) build-datanode
 	$(MAKE) build-broker
