@@ -9,6 +9,35 @@
 - Los clientes RYW se deben ejecutar manualmente cuando estan corriendo el broker, datanodes, coordinador
 - Los conflictos por concurrecia se manejan por orden alfabetico
 
+- vm1 es dist013
+- vm2 es dist014
+- vm3 es dist015
+- vm4 es dist016
+
+- vm1 tiene los datanodes
+- vm2 tiene al coordinador
+- vm3 tiene a los coordinadores de trafico
+- vm4 tiene al broker y monotonic clients
+- vm4 es donde se ejecuta a los clientes RYW
+
+## Credenciales
+
+**dist013**
+- ehe6gqRsS2Fk
+- 10.35.168.23
+
+**dist014** 
+- KRZ65kfAEmpB
+- 10.35.168.24
+
+**dist015**
+- aNASDGkYnQ8F
+- 10.35.168.25
+
+**dist016**
+- jrKU59Umn2TW
+- 10.35.168.26
+
 ## Como ejecutar
 
 - en vm 1 ejecutar ```make build-vm1```
